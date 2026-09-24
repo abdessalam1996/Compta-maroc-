@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compta Maroc - المحاسبة</title>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<style>
+:root{--ink:#1F3A5F;--paper:#F3F6F2;--line:#C9D6CC;--in:#2F7D4F;--out:#B23A3A;--w:#fff}
+*{box-sizing:border-box}
+body{margin:0;font-family:Tahoma,Arial,sans-serif;background:var(--paper);color:var(--ink)}
+header{background:var(--ink);color:var(--w);padding:14px 16px}
+header h1{margin:0 0 4px;font-size:1.3rem}
+nav{display:flex;gap:6px;overflow-x:auto;padding:10px 16px;background:#E3EAE4}
+nav button{flex:none}
+main{max-width:900px;margin:0 auto;padding:16px}
+h2{font-size:1.15rem;margin:0 0 10px}h3{font-size:1rem;margin:14px 0 6px}
+.card{background:var(--w);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.full{grid-column:1/-1}
+label{display:block;font-size:.85rem;font-weight:bold;margin-bottom:3px}
+input,select{width:100%;padding:9px;font:inherit;border:1px solid var(--line);border-radius:6px;background:var(--w);color:var(--ink)}
+button{font:inherit;font-weight:bold;border:1px solid var(--ink);background:var(--w);color:var(--ink);border-radius:6px;padding:9px 12px;cursor:pointer}
+button.main,nav button.on{background:var(--ink);color:var(--w)}
+.tab{display:none}.tab.on{display:block}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{background:#E8EEE9}
+td.n{text-align:left;direction:ltr;font-variant-numeric:tabular-nums}
+tr.tot td{font-weight:bold;border-top:2px solid var(--ink)}
+.muted{opacity:.7;font-size:.85rem}
+#preview{max-width:100%;max-height:260px;display:none;margin-top:8px;border-radius:6px}
+.ok{color:var(--in)}.ko{color:var(--out)}
+@media(max-width:560px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><h1>المحاسبة - Compta Maroc</h1><div class="muted" id="soc"></div></header>
+<nav>
+  <button class="on" data-t="saisie">📷 Saisie</button>
+  <button data-t="factures">Factures</button>
+  <button data-t="journal">Journal</button>
+  <button data-t="amort">Amortissements</button>
+  <button data-t="tvaTab">TVA</button>
+  <button data-t="bilan">Bilan & CPC</button>
+  <button data-t="params">⚙️ الإعدادات</button>
+</nav>
+<main>
+<section id="saisie" class="tab on">
+  <div class="card">
+    <label for="photo">صوّر الفاكتورة ولا اختار صورة</label>
+    <input type="file" id="photo" accept="image/*">
+    <img id="preview" alt="الفاكتورة">
+    <p><button class="main" id="ocr" type="button">قرا الفاكتورة أوتوماتيكيا</button></p>
+    <div class="muted" id="ocrMsg">القراءة الأوتوماتيكية ماشي 100%، ديما راجع الأرقام قبل ما تسجل.</div>
+  </div>
+  <div class="card grid">
+    <div><label for="type">نوع العملية</label>
+      <select id="type"><option value="achat">Achat (مصروف)</option><option value="immob">Immobilisation (معدات)</option><option value="vente">Vente (مبيعات)</option></select></div>
+    <div><label for="date">التاريخ</label><input type="date" id="date"></div>
+    <div><label for="num">رقم الفاكتورة</label><input id="num"></div>
+    <div><label for="tiers" id="tiersLbl">المورد (Fournisseur)</label><input id="tiers"></div>
+    <div><label for="ice">ICE</label><input id="ice" inputmode="numeric" maxlength="15"></div>
+    <div><label for="des">Désignation</label><input id="des"></div>
+    <div class="full"><label for="compte">الحساب (PCM)</label><select id="compte"></select></div>
+    <div id="amWrap" class="full"><label for="taux">نسبة Amortissement % (linéaire)</label><input type="number" id="taux" step="0.01"></div>
+    <div><label for="ht">Montant HT</label><input type="number" id="ht" step="0.01"></div>
+    <div><label for="tva">Taux TVA %</label><select id="tva"><option>20</option><option>14</option><option>10</option><option>7</option><option>0</option></select></div>
+    <div><label for="mtva">Montant TVA</label><input id="mtva" readonly></div>
+    <div><label for="ttc">Montant TTC</label><input type="number" id="ttc" step="0.01"></div>
+    <div class="full"><label for="pay">الخلاص</label>
+      <select id="pay"><option value="">ما تخلصاتش (à crédit)</option><option value="5141">تخلصات بالبنكة (5141)</option><option value="5161">تخلصات كاش (5161)</option></select></div>
+    <button class="main full" id="save" type="button">سجّل الفاكتورة</button>
+    <div class="full ok" id="msg"></div>
+  </div>
+</section>
+<section id="factures" class="tab"><div class="card" id="listOut"></div></section>
+<section id="journal" class="tab"><div class="card" id="jOut"></div></section>
+<section id="amort" class="tab"><div class="card" id="aOut"></div></section>
+<section id="tvaTab" class="tab"><div class="card" id="tOut"></div></section>
+<section id="bilan" class="tab"><div class="card" id="bOut"></div><div class="card" id="cOut"></div></section>
+<section id="params" class="tab"><div class="card grid">
+  <div class="full"><label for="pNom">اسم الشركة</label><input id="pNom"></div>
+  <div><label for="pIce">ICE ديال الشركة</label><input id="pIce" maxlength="15"></div>
+  <div><label for="pYear">Exercice (العام)</label><input type="number" id="pYear"></div>
+  <div class="full"><label for="pCap">Capital social (الفلوس اللي بديتي بيهم فالبنكة)</label><input type="number" id="pCap" step="0.01"></div>
+  <button class="main full" id="pSave" type="button">حفظ</button>
+  <button class="full" id="csv" type="button">تحميل Journal (Excel / CSV)</button>
+  <button class="full ko" id="reset" type="button">مسح جميع الفواتير</button>
+</div></section>
+</main>
+
+<script>
+const ACC={'1111':'Capital social','1161':'Report à nouveau','1191':"Résultat net de l'exercice",
+'2321':'Bâtiments','2332':'Matériel et outillage','2340':'Matériel de transport','2351':'Mobilier de bureau','2352':'Matériel de bureau','2355':'Matériel informatique',
+'2832':'Amort. constructions','2833':'Amort. matériel et outillage','2834':'Amort. matériel de transport','2835':'Amort. mobilier et matériel de bureau',
+'3421':'Clients','34551':'État TVA récupérable sur immobilisations','34552':'État TVA récupérable sur charges',
+'4411':'Fournisseurs','4455':'État TVA facturée','4481':"Dettes sur acquisitions d'immobilisations",
+'5141':'Banque','5161':'Caisse',
+'6111':'Achats de marchandises','6121':'Achats de matières premières','6125':'Achats non stockés (fournitures, eau, électricité)','6131':'Locations et charges locatives','6133':'Entretien et réparations','6134':"Primes d'assurances",'6142':'Transports','6144':'Publicité','6145':'Frais postaux et télécommunications','6147':'Services bancaires','6193':"Dotations d'exploitation aux amortissements",
+'7111':'Ventes de marchandises au Maroc','7121':'Ventes de biens produits au Maroc','7124':'Ventes de services produits au Maroc'};
+const LISTS={achat:['6111','6121','6125','6131','6133','6134','6142','6144','6145','6147'],immob:['2321','2332','2340','2351','2352','2355'],vente:['7111','7121','7124']};
+const RATE={'2321':4,'2332':10,'2340':20,'2351':10,'2352':10,'2355':20};
+
+let S={info:{nom:'',ice:'',year:new Date().getFullYear(),capital:0},inv:[]};
+try{const d=JSON.parse(localStorage.getItem('compta-ma'));if(d)S=Object.assign(S,d)}catch(e){}
+const save=()=>{try{localStorage.setItem('compta-ma',JSON.stringify(S))}catch(e){}};
+const $=id=>document.getElementById(id);
+const r2=n=>Math.round(n*100)/100;
+const fmt=n=>(n||0).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const tbl=(h,rows)=>`<div class="scroll"><table><thead><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
+
+/* Onglets */
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('nav button,.tab').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');$(b.dataset.t).classList.add('on');render();});
+
+/* Formulaire */
+function fillAccounts(){const t=$('type').value;
+  $('compte').innerHTML=LISTS[t].map(c=>`<option value="${c}">${c} - ${ACC[c]}</option>`).join('');
+  $('amWrap').style.display=t==='immob'?'block':'none';
+  $('tiersLbl').textContent=t==='vente'?'الزبون (Client)':'المورد (Fournisseur)';setRate();}
+function setRate(){$('taux').value=RATE[$('compte').value]||''}
+function fromHT(){const ht=+$('ht').value||0,t=+$('tva').value;$('mtva').value=r2(ht*t/100).toFixed(2);$('ttc').value=r2(ht*(1+t/100)).toFixed(2)}
+function fromTTC(){const ttc=+$('ttc').value||0,t=+$('tva').value,ht=r2(ttc/(1+t/100));$('ht').value=ht.toFixed(2);$('mtva').value=r2(ttc-ht).toFixed(2)}
+$('type').onchange=fillAccounts;$('compte').onchange=setRate;
+$('ht').oninput=fromHT;$('tva').onchange=fromHT;$('ttc').oninput=fromTTC;
+
+$('save').onclick=()=>{const ht=+$('ht').value;
+  if(!$('date').value||!ht){alert('خاص التاريخ والمبلغ');return}
+  const t=+$('tva').value;
+  S.inv.push({id:Date.now(),type:$('type').value,date:$('date').value,num:$('num').value.trim(),tiers:$('tiers').value.trim(),
+    ice:$('ice').value.trim(),des:$('des').value.trim(),compte:$('compte').value,taux:+$('taux').value||0,
+    ht:r2(ht),rate:t,tva:r2(ht*t/100),ttc:r2(ht*(1+t/100)),pay:$('pay').value});
+  save();['num','tiers','ice','des','ht','mtva','ttc'].forEach(i=>$(i).value='');
+  $('msg').textContent='✓ تسجلات الفاكتورة';render();};
+
+/* Lecture de la photo (OCR) */
+$('photo').onchange=()=>{const f=$('photo').files[0];if(!f)return;$('preview').src=URL.createObjectURL(f);$('preview').style.display='block'};
+$('ocr').onclick=async()=>{const f=$('photo').files[0];
+  if(!f){alert('اختار صورة الفاكتورة أولا');return}
+  if(!window.Tesseract){$('ocrMsg').textContent='ما تحمّلش برنامج القراءة، تأكد من الأنترنت.';return}
+  $('ocrMsg').textContent='كيقرا الفاكتورة… (ممكن ياخد شي دقيقة)';
+  try{const {data:{text}}=await Tesseract.recognize(f,'fra',{logger:m=>{if(m.status==='recognizing text')$('ocrMsg').textContent='كيقرا… '+Math.round(m.progress*100)+'%'}});
+    parse(text);$('ocrMsg').textContent='✓ تقرات. راجع المعلومات قبل ما تسجل.';
+  }catch(e){$('ocrMsg').textContent='ما قدرش يقرا الصورة. عمّر المعلومات يدويا.'}};
+function num(s){s=s.replace(/\s/g,'').replace(/[^\d.,]/g,'');
+  if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');else s=s.replace(/\.(?=.*\.)/g,'');return parseFloat(s)}
+function amountAfter(t,re){for(const line of t.split('\n').reverse()){if(re.test(line)){const m=line.match(/\d[\d\s.,]*\d/g);if(m){const v=num(m[m.length-1]);if(v)return v}}}return null}
+function parse(t){
+  const d=t.match(/(\d{2})[\/.-](\d{2})[\/.-](\d{4})/);if(d)$('date').value=`${d[3]}-${d[2]}-${d[1]}`;
+  const ice=t.match(/I\.?C\.?E\D{0,6}(\d{15})/i);if(ice)$('ice').value=ice[1];
+  const n=t.match(/factur\w*[ \t]*(?:n[ \t]*[°o][ \t]*)?[:#]?[ \t]*([A-Z0-9][A-Z0-9\/-]*\d[A-Z0-9\/-]*)/i);if(n)$('num').value=n[1];
+  if(!$('tiers').value){const first=t.split('\n').map(s=>s.trim()).find(s=>s.length>2);if(first)$('tiers').value=first.slice(0,60)}
+  const rate=t.match(/\b(20|14|10|7)\s*%/);if(rate)$('tva').value=rate[1];
+  const ht=amountAfter(t,/(total|montant)\s*h\.?\s*t|\bH\.?T\.?\b/i),ttc=amountAfter(t,/t\.?\s*t\.?\s*c|net\s*[àa]\s*payer/i);
+  if(ht&&ttc&&!rate){const r=Math.round((ttc/ht-1)*100);if([20,14,10,7,0].includes(r))$('tva').value=r}
+  if(ht){$('ht').value=ht;fromHT()}else if(ttc){$('ttc').value=ttc;fromTTC()}}
+
+/* Amortissement linéaire (prorata par mois) */
+function plan(f){const rows=[];if(!f.taux)return rows;
+  const d=new Date(f.date),annual=f.ht*f.taux/100;let y=d.getFullYear(),m=12-d.getMonth(),cum=0;
+  while(cum<f.ht-0.005&&rows.length<100){const dot=r2(Math.min(annual*m/12,f.ht-cum));cum=r2(cum+dot);rows.push({y,dot,cum,vnc:r2(f.ht-cum)});y++;m=12}
+  return rows}
+
+/* Écritures comptables */
+function entries(){const E=[],add=(date,lib,lines)=>E.push({date,lib,lines:lines.filter(l=>l[1]||l[2])});
+  if(S.info.capital>0)add('0000-01-01','Apport en capital',[['5141',S.info.capital,0],['1111',0,S.info.capital]]);
+  S.inv.forEach(f=>{const L=('Fact. '+(f.num||'')+' '+(f.tiers||'')).trim();
+    if(f.type==='achat'){add(f.date,L,[[f.compte,f.ht,0],['34552',f.tva,0],['4411',0,f.ttc]]);
+      if(f.pay)add(f.date,'Règlement '+L,[['4411',f.ttc,0],[f.pay,0,f.ttc]])}
+    if(f.type==='immob'){add(f.date,L,[[f.compte,f.ht,0],['34551',f.tva,0],['4481',0,f.ttc]]);
+      if(f.pay)add(f.date,'Règlement '+L,[['4481',f.ttc,0],[f.pay,0,f.ttc]]);
+      plan(f).forEach(p=>add(p.y+'-12-31','Dotation '+(f.des||ACC[f.compte]),[['6193',p.dot,0],['283'+f.compte[2],0,p.dot]]))}
+    if(f.type==='vente'){add(f.date,L,[['3421',f.ttc,0],[f.compte,0,f.ht],['4455',0,f.tva]]);
+      if(f.pay)add(f.date,'Encaissement '+L,[[f.pay,f.ttc,0],['3421',0,f.ttc]])}});
+  return E.sort((a,b)=>a.date.localeCompare(b.date))}
+
+/* Affichage */
+function renderList(){
+  const rows=S.inv.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(f=>`<tr><td>${f.date}</td><td>${f.type}</td><td>${esc(f.num)}</td><td>${esc(f.tiers)}</td><td class="n">${fmt(f.ht)}</td><td class="n">${fmt(f.tva)}</td><td class="n">${fmt(f.ttc)}</td><td>${f.pay?'✓':'-'}</td><td><button class="ko" onclick="del(${f.id})">✕</button></td></tr>`);
+  $('listOut').innerHTML='<h2>Factures</h2>'+(S.inv.length?tbl(['Date','Type','N°','Tiers','HT','TVA','TTC','Réglée',''],rows):'<p class="muted">ما كاين حتى فاكتورة. سجّل الأولى من Saisie.</p>')}
+function del(id){if(confirm('تمسح هاد الفاكتورة؟')){S.inv=S.inv.filter(f=>f.id!==id);save();render()}}
+
+function renderJournal(){const Y=String(S.info.year);let td=0,tc=0;const rows=[];
+  entries().filter(e=>e.date.startsWith(Y)).forEach(e=>e.lines.forEach(([c,d,cr],i)=>{td+=d;tc+=cr;
+    rows.push(`<tr><td>${i?'':e.date}</td><td title="${ACC[c]||''}">${c}</td><td>${i?'':esc(e.lib)}</td><td class="n">${d?fmt(d):''}</td><td class="n">${cr?fmt(cr):''}</td></tr>`)}));
+  rows.push(`<tr class="tot"><td colspan="3">Total</td><td class="n">${fmt(td)}</td><td class="n">${fmt(tc)}</td></tr>`);
+  $('jOut').innerHTML=`<h2>Journal ${Y}</h2>`+tbl(['Date','Compte','Libellé','Débit','Crédit'],rows)}
+
+function renderAmort(){const Y=+S.info.year,rows=[];
+  S.inv.filter(f=>f.type==='immob').forEach(f=>{
+    rows.push(`<tr class="tot"><td colspan="4">${esc(f.des||ACC[f.compte])} | ${f.date} | ${fmt(f.ht)} DH | ${f.taux}%</td></tr>`);
+    plan(f).forEach(p=>rows.push(`<tr${p.y===Y?' style="background:#E8EEE9"':''}><td>${p.y}</td><td class="n">${fmt(p.dot)}</td><td class="n">${fmt(p.cum)}</td><td class="n">${fmt(p.vnc)}</td></tr>`))});
+  $('aOut').innerHTML="<h2>Plan d'amortissement</h2>"+(rows.length?tbl(['Année','Dotation','Cumul','VNC'],rows):'<p class="muted">ما كاين حتى immobilisation.</p>')}
+
+function renderTVA(){const Y=String(S.info.year),M=Array.from({length:12},()=>({f:0,c:0,i:0}));
+  S.inv.filter(f=>f.date.startsWith(Y)).forEach(f=>{const m=M[+f.date.slice(5,7)-1];
+    if(f.type==='vente')m.f+=f.tva;else if(f.type==='achat')m.c+=f.tva;else m.i+=f.tva});
+  const T={f:0,c:0,i:0},show=d=>d<0?'Crédit '+fmt(-d):fmt(d);
+  const rows=M.map((m,k)=>{T.f+=m.f;T.c+=m.c;T.i+=m.i;const d=r2(m.f-m.c-m.i);
+    return `<tr><td>${String(k+1).padStart(2,'0')}/${Y}</td><td class="n">${fmt(m.f)}</td><td class="n">${fmt(m.c)}</td><td class="n">${fmt(m.i)}</td><td class="n">${show(d)}</td></tr>`});
+  rows.push(`<tr class="tot"><td>Total</td><td class="n">${fmt(T.f)}</td><td class="n">${fmt(T.c)}</td><td class="n">${fmt(T.i)}</td><td class="n">${show(r2(T.f-T.c-T.i))}</td></tr>`);
+  $('tOut').innerHTML=`<h2>TVA ${Y}</h2>`+tbl(['Mois','TVA facturée','Récup. charges','Récup. immob.','TVA due'],rows)+
+    '<p class="muted">حساب تقريبي على حساب تاريخ الفاكتورة. فالمغرب الخصم ديال TVA كيكون فالشهر اللي تخلصات فيه الفاكتورة، والتصريح كيتدار فـ SIMPL-TVA.</p>'}
+
+function renderBilan(){const Y=+S.info.year,end=Y+'-12-31',B={},res={cur:0,prev:0},cpc={},am={};
+  entries().filter(e=>e.date<=end).forEach(e=>{const cur=e.date.startsWith(String(Y));
+    e.lines.forEach(([c,d,cr])=>{
+      if(c[0]==='6'||c[0]==='7'){const v=cr-d;if(cur){res.cur+=v;cpc[c]=(cpc[c]||0)+(c[0]==='6'?d-cr:v)}else res.prev+=v}
+      else B[c]=(B[c]||0)+d-cr})});
+  S.inv.filter(f=>f.type==='immob').forEach(f=>plan(f).filter(p=>p.y<=Y).forEach(p=>am[f.compte]=(am[f.compte]||0)+p.dot));
+  const A=[],P=[];let tA=0,tP=0;
+  const rowA=(c,b,a)=>{const n=b-a;tA+=n;A.push(`<tr><td>${c} ${ACC[c]||''}</td><td class="n">${fmt(b)}</td><td class="n">${a?fmt(a):''}</td><td class="n">${fmt(n)}</td></tr>`)};
+  const rowP=(c,lbl,v)=>{tP+=v;P.push(`<tr><td>${c} ${lbl}</td><td class="n">${fmt(v)}</td></tr>`)};
+  const K=Object.keys(B).sort(),nz=c=>Math.abs(B[c])>0.004;
+  K.filter(c=>c[0]==='2'&&!c.startsWith('28')).forEach(c=>rowA(c,B[c],am[c]||0));
+  K.filter(c=>c[0]==='3'&&nz(c)).forEach(c=>rowA(c,B[c],0));
+  K.filter(c=>c[0]==='5'&&B[c]>0.004).forEach(c=>rowA(c,B[c],0));
+  K.filter(c=>c[0]==='1').forEach(c=>rowP(c,ACC[c],-B[c]));
+  rowP('1161',ACC['1161'],r2(res.prev));rowP('1191',ACC['1191'],r2(res.cur));
+  K.filter(c=>c[0]==='4'&&nz(c)).forEach(c=>rowP(c,ACC[c],-B[c]));
+  K.filter(c=>c[0]==='5'&&B[c]<-0.004).forEach(c=>rowP(c,'Crédits de trésorerie ('+ACC[c]+')',-B[c]));
+  const okB=Math.abs(tA-tP)<0.01;
+  $('bOut').innerHTML=`<h2>Bilan au 31/12/${Y}</h2><h3>Actif</h3>`+
+    tbl(['Poste','Brut','Amort.','Net'],[...A,`<tr class="tot"><td colspan="3">Total Actif</td><td class="n">${fmt(tA)}</td></tr>`])+
+    '<h3>Passif</h3>'+tbl(['Poste','Montant'],[...P,`<tr class="tot"><td>Total Passif</td><td class="n">${fmt(tP)}</td></tr>`])+
+    `<p class="${okB?'ok':'ko'}">${okB?'✓ Bilan équilibré':'⚠ الفرق: '+fmt(tA-tP)}</p>`;
+  let ch=0,pr=0;
+  const C=Object.keys(cpc).sort().map(c=>{const v=cpc[c];if(c[0]==='6')ch+=v;else pr+=v;
+    return `<tr><td>${c} ${ACC[c]||''}</td><td class="n">${c[0]==='6'?fmt(v):''}</td><td class="n">${c[0]==='7'?fmt(v):''}</td></tr>`});
+  C.push(`<tr class="tot"><td>Total</td><td class="n">${fmt(ch)}</td><td class="n">${fmt(pr)}</td></tr>`,
+    `<tr class="tot"><td>Résultat net ${pr-ch>=0?'(Bénéfice)':'(Perte)'}</td><td class="n" colspan="2">${fmt(pr-ch)}</td></tr>`);
+  $('cOut').innerHTML=`<h2>CPC ${Y}</h2>`+tbl(['Compte','Charges','Produits'],C)+'<p class="muted">IS ما محسوبش هنا.</p>'}
+
+function render(){renderList();renderJournal();renderAmort();renderTVA();renderBilan()}
+
+/* Paramètres */
+function loadInfo(){$('pNom').value=S.info.nom;$('pIce').value=S.info.ice;$('pYear').value=S.info.year;$('pCap').value=S.info.capital||'';
+  $('soc').textContent=(S.info.nom||'شركتي')+(S.info.ice?' | ICE '+S.info.ice:'')+' | Exercice '+S.info.year}
+$('pSave').onclick=()=>{S.info={nom:$('pNom').value.trim(),ice:$('pIce').value.trim(),year:+$('pYear').value||new Date().getFullYear(),capital:+$('pCap').value||0};
+  save();loadInfo();render();alert('تحفظ ✓')};
+$('csv').onclick=()=>{const L=[['Date','Compte','Intitulé','Libellé','Débit','Crédit']];
+  entries().forEach(e=>e.lines.forEach(([c,d,cr])=>L.push([e.date.startsWith('0000')?'Ouverture':e.date,c,ACC[c]||'',e.lib,d,cr])));
+  const csv='\uFEFF'+L.map(l=>l.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='journal.csv';a.click()};
+$('reset').onclick=()=>{if(confirm('غادي تمسح جميع الفواتير. متأكد؟')){S.inv=[];save();render()}};
+
+$('date').valueAsDate=new Date();fillAccounts();loadInfo();render();
+</script>
+</body>
+</html>
