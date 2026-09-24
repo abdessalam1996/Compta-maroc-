@@ -28,6 +28,7 @@ table{width:100%;border-collapse:collapse;font-size:.9rem}
 th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
 th{background:#E8EEE9}
 td.n{text-align:left;direction:ltr;font-variant-numeric:tabular-nums}
+td.acc{font-weight:bold}
 tr.tot td{font-weight:bold;border-top:2px solid var(--ink)}
 .muted{opacity:.7;font-size:.85rem}
 #preview{max-width:100%;max-height:260px;display:none;margin-top:8px;border-radius:6px}
@@ -190,9 +191,9 @@ function del(id){if(confirm('تمسح هاد الفاكتورة؟')){S.inv=S.inv
 
 function renderJournal(){const Y=String(S.info.year);let td=0,tc=0;const rows=[];
   entries().filter(e=>e.date.startsWith(Y)).forEach(e=>e.lines.forEach(([c,d,cr],i)=>{td+=d;tc+=cr;
-    rows.push(`<tr><td>${i?'':e.date}</td><td title="${ACC[c]||''}">${c}</td><td>${i?'':esc(e.lib)}</td><td class="n">${d?fmt(d):''}</td><td class="n">${cr?fmt(cr):''}</td></tr>`)}));
-  rows.push(`<tr class="tot"><td colspan="3">Total</td><td class="n">${fmt(td)}</td><td class="n">${fmt(tc)}</td></tr>`);
-  $('jOut').innerHTML=`<h2>Journal ${Y}</h2>`+tbl(['Date','Compte','Libellé','Débit','Crédit'],rows)}
+    rows.push(`<tr><td>${i?'':e.date}</td><td class="acc">${c}</td><td>${ACC[c]||''}</td><td>${i?'':esc(e.lib)}</td><td class="n">${d?fmt(d):''}</td><td class="n">${cr?fmt(cr):''}</td></tr>`)}));
+  rows.push(`<tr class="tot"><td colspan="4">Total</td><td class="n">${fmt(td)}</td><td class="n">${fmt(tc)}</td></tr>`);
+  $('jOut').innerHTML=`<h2>Journal ${Y}</h2>`+tbl(['Date','Compte','Intitulé du compte','Libellé','Débit','Crédit'],rows)}
 
 function renderAmort(){const Y=+S.info.year,rows=[];
   S.inv.filter(f=>f.type==='immob').forEach(f=>{
