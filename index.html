@@ -134,8 +134,12 @@ $('save').onclick=()=>{const ht=+$('ht').value;
   S.inv.push({id:Date.now(),type:$('type').value,date:$('date').value,num:$('num').value.trim(),tiers:$('tiers').value.trim(),
     ice:$('ice').value.trim(),des:$('des').value.trim(),compte:$('compte').value,taux:+$('taux').value||0,
     ht:r2(ht),rate:t,tva:r2(ht*t/100),ttc:r2(ht*(1+t/100)),pay:$('pay').value});
+  /* Exercice automatique: ياخد العام من تاريخ الفاكتورة */
+  const fy=+$('date').value.slice(0,4);
+  let note='';
+  if(fy!==+S.info.year){S.info.year=fy;loadInfo();note=' | Exercice تبدل لـ '+fy;}
   save();['num','tiers','ice','des','ht','mtva','ttc'].forEach(i=>$(i).value='');
-  $('msg').textContent='✓ تسجلات الفاكتورة';render();};
+  $('msg').textContent='✓ تسجلات الفاكتورة'+note;render();};
 
 /* Lecture de la photo (OCR) */
 $('photo').onchange=()=>{const f=$('photo').files[0];if(!f)return;$('preview').src=URL.createObjectURL(f);$('preview').style.display='block'};
