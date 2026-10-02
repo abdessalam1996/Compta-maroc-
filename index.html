@@ -3,52 +3,91 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Compta Maroc - المحاسبة</title>
+<title>Compta Maroc Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
-:root{--ink:#1F3A5F;--paper:#F3F6F2;--line:#C9D6CC;--in:#2F7D4F;--out:#B23A3A;--w:#fff}
+:root{--ink:#1F3A5F;--paper:#F3F6F2;--line:#D3DDD5;--soft:#E8EEE9;--in:#2F7D4F;--out:#B23A3A;--warn:#9A6412;--w:#fff}
 *{box-sizing:border-box}
-body{margin:0;font-family:Tahoma,Arial,sans-serif;background:var(--paper);color:var(--ink)}
-header{background:var(--ink);color:var(--w);padding:14px 16px}
-header h1{margin:0 0 4px;font-size:1.3rem}
-nav{display:flex;gap:6px;overflow-x:auto;padding:10px 16px;background:#E3EAE4}
-nav button{flex:none}
-main{max-width:900px;margin:0 auto;padding:16px}
-h2{font-size:1.15rem;margin:0 0 10px}h3{font-size:1rem;margin:14px 0 6px}
+body{margin:0;font-family:"IBM Plex Sans Arabic",Tahoma,Arial,sans-serif;background:var(--paper);color:var(--ink);font-variant-numeric:tabular-nums}
+header{background:var(--ink);color:var(--w);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+header h1{margin:0;font-size:1.2rem}
+header .sub{font-size:.85rem;opacity:.8}
+header select{width:auto;padding:6px 10px;background:var(--w)}
+nav{display:flex;gap:6px;overflow-x:auto;padding:8px 12px;background:#E3EAE4;position:sticky;top:0;z-index:5;border-bottom:1px solid var(--line)}
+nav button{flex:none;padding:8px 11px}
+main{max-width:980px;margin:0 auto;padding:14px}
+h2{font-size:1.1rem;margin:0 0 10px}h3{font-size:.98rem;margin:14px 0 6px}
 .card{background:var(--w);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .full{grid-column:1/-1}
-label{display:block;font-size:.85rem;font-weight:bold;margin-bottom:3px}
+label{display:block;font-size:.83rem;font-weight:600;margin-bottom:3px}
 input,select{width:100%;padding:9px;font:inherit;border:1px solid var(--line);border-radius:6px;background:var(--w);color:var(--ink)}
-button{font:inherit;font-weight:bold;border:1px solid var(--ink);background:var(--w);color:var(--ink);border-radius:6px;padding:9px 12px;cursor:pointer}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
+button{font:inherit;font-weight:600;border:1px solid var(--ink);background:var(--w);color:var(--ink);border-radius:6px;padding:9px 12px;cursor:pointer}
 button.main,nav button.on{background:var(--ink);color:var(--w)}
+button.sm{padding:4px 8px;font-size:.8rem}
+button.ko{color:var(--out);border-color:var(--out)}
 .tab{display:none}.tab.on{display:block}
 .scroll{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:.9rem}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
 th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
-th{background:#E8EEE9}
-td.n{text-align:left;direction:ltr;font-variant-numeric:tabular-nums}
-td.acc{font-weight:bold}
-tr.tot td{font-weight:bold;border-top:2px solid var(--ink)}
-.muted{opacity:.7;font-size:.85rem}
-#preview{max-width:100%;max-height:260px;display:none;margin-top:8px;border-radius:6px}
-.ok{color:var(--in)}.ko{color:var(--out)}
-@media(max-width:560px){.grid{grid-template-columns:1fr}}
+th{background:var(--soft);font-size:.8rem}
+td.n{text-align:left;direction:ltr}
+td.acc{font-weight:700}
+tr.tot td{font-weight:700;border-top:2px solid var(--ink)}
+tr.click{cursor:pointer}tr.click:hover{background:var(--soft)}
+.muted{opacity:.7;font-size:.84rem}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
+.row>*{flex:1;min-width:130px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:var(--w);border:1px solid var(--line);border-radius:10px;padding:12px}
+.kpi .l{font-size:.8rem;opacity:.75}
+.kpi .v{font-size:1.2rem;font-weight:700;direction:ltr;text-align:right;margin-top:4px}
+.pos{color:var(--in)}.neg{color:var(--out)}
+.alert{padding:9px 12px;border-radius:8px;margin:6px 0;border:1px solid}
+.a-w{background:#FFF7E6;border-color:#EBD3A0;color:var(--warn)}
+.a-ko{background:#FBEDED;border-color:#E9BDBD;color:var(--out)}
+.a-ok{background:#EAF5EE;border-color:#BFDCC9;color:var(--in)}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.75rem;font-weight:700}
+.b-ok{background:#E3F2E8;color:var(--in)}.b-ko{background:#FBE9E9;color:var(--out)}.b-w{background:#FFF1D6;color:var(--warn)}
+#preview{max-width:100%;max-height:240px;display:none;margin-top:8px;border-radius:6px}
+dialog{border:none;border-radius:12px;padding:16px;max-width:400px;width:92%;color:var(--ink)}
+dialog::backdrop{background:rgba(31,58,95,.4)}
+.chart text{font-size:11px;fill:var(--ink)}
+#print{display:none}
+@media print{body>*:not(#print){display:none!important}#print{display:block}}
+@media(max-width:560px){.grid{grid-template-columns:1fr}header h1{font-size:1.05rem}}
 </style>
 </head>
 <body>
-<header><h1>المحاسبة - Compta Maroc</h1><div class="muted" id="soc"></div></header>
-<nav>
-  <button class="on" data-t="saisie">📷 Saisie</button>
-  <button data-t="factures">Factures</button>
+<header>
+  <div><h1>Compta Maroc Pro</h1><div class="sub" id="soc"></div></div>
+  <label style="margin:0;color:#fff">Exercice <select id="ySel"></select></label>
+</header>
+<nav id="nav">
+  <button class="on" data-t="dash">📊 لوحة القيادة</button>
+  <button data-t="saisie">📷 Saisie</button>
+  <button data-t="factures">🧾 Factures</button>
+  <button data-t="tiers">👥 Tiers</button>
+  <button data-t="banque">🏦 Banque</button>
   <button data-t="journal">Journal</button>
+  <button data-t="balance">Balance</button>
   <button data-t="amort">Amortissements</button>
   <button data-t="tvaTab">TVA</button>
   <button data-t="bilan">Bilan & CPC</button>
   <button data-t="params">⚙️ الإعدادات</button>
 </nav>
 <main>
-<section id="saisie" class="tab on">
+
+<section id="dash" class="tab on">
+  <div class="kpis" id="kpis"></div>
+  <div class="card"><h2>المبيعات والمشتريات (HT) بالشهر</h2><div id="chart" class="scroll"></div></div>
+  <div class="card"><h2>تنبيهات</h2><div id="alerts"></div></div>
+</section>
+
+<section id="saisie" class="tab">
   <div class="card">
     <label for="photo">صوّر الفاكتورة ولا اختار صورة</label>
     <input type="file" id="photo" accept="image/*">
@@ -59,9 +98,9 @@ tr.tot td{font-weight:bold;border-top:2px solid var(--ink)}
   <div class="card grid">
     <div><label for="type">نوع العملية</label>
       <select id="type"><option value="achat">Achat (مصروف)</option><option value="immob">Immobilisation (معدات)</option><option value="vente">Vente (مبيعات)</option></select></div>
-    <div><label for="date">التاريخ</label><input type="date" id="date"></div>
+    <div><label for="date">تاريخ الفاكتورة</label><input type="date" id="date"></div>
     <div><label for="num">رقم الفاكتورة</label><input id="num"></div>
-    <div><label for="tiers" id="tiersLbl">المورد (Fournisseur)</label><input id="tiers"></div>
+    <div><label for="tiers" id="tiersLbl">المورد (Fournisseur)</label><input id="tiers" list="tiersList" autocomplete="off"><datalist id="tiersList"></datalist></div>
     <div><label for="ice">ICE</label><input id="ice" inputmode="numeric" maxlength="15"></div>
     <div><label for="des">Désignation</label><input id="des"></div>
     <div class="full"><label for="compte">الحساب (PCM)</label><select id="compte"></select></div>
@@ -70,190 +109,469 @@ tr.tot td{font-weight:bold;border-top:2px solid var(--ink)}
     <div><label for="tva">Taux TVA %</label><select id="tva"><option>20</option><option>14</option><option>10</option><option>7</option><option>0</option></select></div>
     <div><label for="mtva">Montant TVA</label><input id="mtva" readonly></div>
     <div><label for="ttc">Montant TTC</label><input type="number" id="ttc" step="0.01"></div>
-    <div class="full"><label for="pay">الخلاص</label>
-      <select id="pay"><option value="">ما تخلصاتش (à crédit)</option><option value="5141">تخلصات بالبنكة (5141)</option><option value="5161">تخلصات كاش (5161)</option></select></div>
+    <div><label for="ech">تاريخ الاستحقاق (Échéance)</label><input type="date" id="ech"></div>
+    <div><label for="pay">الخلاص</label>
+      <select id="pay"><option value="">ما تخلصاتش</option><option value="5141">تخلصات بالبنكة</option><option value="5161">تخلصات كاش</option></select></div>
     <button class="main full" id="save" type="button">سجّل الفاكتورة</button>
-    <div class="full ok" id="msg"></div>
+    <div class="full" id="msg"></div>
   </div>
 </section>
-<section id="factures" class="tab"><div class="card" id="listOut"></div></section>
-<section id="journal" class="tab"><div class="card" id="jOut"></div></section>
-<section id="amort" class="tab"><div class="card" id="aOut"></div></section>
-<section id="tvaTab" class="tab"><div class="card" id="tOut"></div></section>
-<section id="bilan" class="tab"><div class="card" id="bOut"></div><div class="card" id="cOut"></div></section>
-<section id="params" class="tab"><div class="card grid">
-  <div class="full"><label for="pNom">اسم الشركة</label><input id="pNom"></div>
-  <div><label for="pIce">ICE ديال الشركة</label><input id="pIce" maxlength="15"></div>
-  <div><label for="pYear">Exercice (العام)</label><input type="number" id="pYear"></div>
-  <div class="full"><label for="pCap">Capital social (الفلوس اللي بديتي بيهم فالبنكة)</label><input type="number" id="pCap" step="0.01"></div>
-  <button class="main full" id="pSave" type="button">حفظ</button>
-  <button class="full" id="csv" type="button">تحميل Journal (Excel / CSV)</button>
-  <button class="full ko" id="reset" type="button">مسح جميع الفواتير</button>
+
+<section id="factures" class="tab"><div class="card">
+  <h2>Factures</h2>
+  <div class="row">
+    <div><label for="fFilter">عرض</label><select id="fFilter"><option value="all">الكل</option><option value="achat">Achats</option><option value="immob">Immobilisations</option><option value="vente">Ventes</option><option value="unpaid">ما تخلصاتش</option></select></div>
+    <div><label for="fSearch">قلّب</label><input id="fSearch" placeholder="رقم، مورد، كليان…"></div>
+  </div>
+  <div id="listOut"></div>
 </div></section>
+
+<section id="tiers" class="tab">
+  <div class="card grid">
+    <h2 class="full">زيد Tiers</h2>
+    <div><label for="tType">النوع</label><select id="tType"><option value="fournisseur">Fournisseur</option><option value="client">Client</option></select></div>
+    <div><label for="tNom">الاسم</label><input id="tNom"></div>
+    <div><label for="tIce">ICE</label><input id="tIce" maxlength="15" inputmode="numeric"></div>
+    <div><label for="tTel">التيليفون</label><input id="tTel" inputmode="tel"></div>
+    <div class="full"><label for="tMail">Email</label><input id="tMail" type="email"></div>
+    <button class="main full" id="tAdd" type="button">زيد</button>
+  </div>
+  <div class="card" id="tOutF"></div>
+  <div class="card" id="tOutC"></div>
+</section>
+
+<section id="banque" class="tab">
+  <div class="card">
+    <h2>Relevé bancaire</h2>
+    <p class="muted">حمّل الـ relevé ديال البنكة بصيغة CSV (من Excel: Enregistrer sous ← CSV). الأعمدة: Date ، Libellé ، Montant (ولا Débit و Crédit). السيت كيربط كل عملية بالفاكتورة ديالها أوتوماتيكيا وكيصنف الباقي.</p>
+    <div class="row">
+      <div><label for="bAcct">الحساب</label><select id="bAcct"><option value="5141">5141 Banque</option><option value="5161">5161 Caisse</option></select></div>
+      <div><label for="bFile">ملف CSV</label><input type="file" id="bFile" accept=".csv,.txt"></div>
+    </div>
+    <h3>ولا زيد عملية بيدك</h3>
+    <div class="row">
+      <div><label for="bDate">التاريخ</label><input type="date" id="bDate"></div>
+      <div><label for="bLib">Libellé</label><input id="bLib"></div>
+      <div><label for="bAmt">المبلغ (+ دخل / − خرج)</label><input type="number" id="bAmt" step="0.01"></div>
+      <button class="main" id="bAdd" type="button">زيد</button>
+    </div>
+    <button id="bMatch" type="button">🔗 Rapprochement automatique</button>
+    <div id="bMsg" class="muted" style="margin-top:8px"></div>
+  </div>
+  <div class="card" id="bOut"></div>
+</section>
+
+<section id="journal" class="tab"><div class="card">
+  <div class="row"><div><label for="jFilter">Journal</label><select id="jFilter"><option value="">الكل</option><option value="AC">AC Achats</option><option value="VT">VT Ventes</option><option value="BQ">BQ Banque</option><option value="CA">CA Caisse</option><option value="OD">OD Opérations diverses</option></select></div></div>
+  <div id="jOut"></div>
+</div></section>
+
+<section id="balance" class="tab">
+  <div class="card" id="balOut"></div>
+  <div class="card" id="glOut"><p class="muted">ضغط على شي حساب فالـ Balance باش يبان ليك Grand livre ديالو.</p></div>
+</section>
+
+<section id="amort" class="tab"><div class="card" id="aOut"></div></section>
+<section id="tvaTab" class="tab"><div class="card" id="tvOut"></div></section>
+<section id="bilan" class="tab"><div class="card" id="biOut"></div><div class="card" id="cpcOut"></div></section>
+
+<section id="params" class="tab">
+  <div class="card grid">
+    <h2 class="full">معلومات الشركة</h2>
+    <div class="full"><label for="pNom">اسم الشركة</label><input id="pNom"></div>
+    <div><label for="pIce">ICE</label><input id="pIce" maxlength="15"></div>
+    <div><label for="pIf">IF</label><input id="pIf"></div>
+    <div><label for="pRc">RC</label><input id="pRc"></div>
+    <div><label for="pTel">التيليفون</label><input id="pTel"></div>
+    <div class="full"><label for="pAdr">العنوان</label><input id="pAdr"></div>
+    <div><label for="pCap">Capital social (البداية فالبنكة)</label><input type="number" id="pCap" step="0.01"></div>
+    <div><label for="pDelai">أجل الأداء (أيام)</label><input type="number" id="pDelai"></div>
+    <div class="full"><label for="pReg">Régime TVA</label><select id="pReg"><option value="encaissement">Encaissement (حسب تاريخ الخلاص)</option><option value="debit">Débit (حسب تاريخ الفاكتورة)</option></select></div>
+    <button class="main full" id="pSave" type="button">حفظ</button>
+  </div>
+  <div class="card">
+    <h2>الحفظ والنقل</h2>
+    <p class="muted">الداتا محفوظة غير فهاد المتصفح. دير Sauvegarde باش تحتافظ بنسخة، ولا باش تنقل الداتا من البيسي للتيليفون (Restaurer فالجهاز الآخر).</p>
+    <div class="row">
+      <button id="bkOut" type="button">💾 Sauvegarde (تحميل)</button>
+      <div><label for="bkIn">♻️ Restaurer من ملف</label><input type="file" id="bkIn" accept=".json"></div>
+    </div>
+    <div class="row">
+      <button id="csv" type="button">تحميل Journal (Excel / CSV)</button>
+      <button class="ko" id="reset" type="button">مسح كلشي</button>
+    </div>
+  </div>
+</section>
 </main>
 
+<dialog id="payDlg">
+  <h2>تسجيل الخلاص</h2>
+  <div class="muted" id="payInfo"></div>
+  <p><label for="pdDate">تاريخ الخلاص</label><input type="date" id="pdDate"></p>
+  <p><label for="pdMode">طريقة الخلاص</label><select id="pdMode"><option value="5141">البنكة (5141)</option><option value="5161">كاش (5161)</option></select></p>
+  <div class="row"><button class="main" id="pdOk" type="button">سجّل الخلاص</button><button id="pdNo" type="button">رجوع</button></div>
+</dialog>
+
+<div id="print"></div>
+
 <script>
+/* ===== Plan comptable marocain (PCM) ===== */
 const ACC={'1111':'Capital social','1161':'Report à nouveau','1191':"Résultat net de l'exercice",
 '2321':'Bâtiments','2332':'Matériel et outillage','2340':'Matériel de transport','2351':'Mobilier de bureau','2352':'Matériel de bureau','2355':'Matériel informatique',
 '2832':'Amort. constructions','2833':'Amort. matériel et outillage','2834':'Amort. matériel de transport','2835':'Amort. mobilier et matériel de bureau',
 '3421':'Clients','34551':'État TVA récupérable sur immobilisations','34552':'État TVA récupérable sur charges',
-'4411':'Fournisseurs','4455':'État TVA facturée','4481':"Dettes sur acquisitions d'immobilisations",
+'4411':'Fournisseurs','4441':'Caisse Nationale de Sécurité Sociale','4455':'État TVA facturée','4456':'État TVA due','4481':"Dettes sur acquisitions d'immobilisations",
 '5141':'Banque','5161':'Caisse',
-'6111':'Achats de marchandises','6121':'Achats de matières premières','6125':'Achats non stockés (fournitures, eau, électricité)','6131':'Locations et charges locatives','6133':'Entretien et réparations','6134':"Primes d'assurances",'6142':'Transports','6144':'Publicité','6145':'Frais postaux et télécommunications','6147':'Services bancaires','6193':"Dotations d'exploitation aux amortissements",
-'7111':'Ventes de marchandises au Maroc','7121':'Ventes de biens produits au Maroc','7124':'Ventes de services produits au Maroc'};
-const LISTS={achat:['6111','6121','6125','6131','6133','6134','6142','6144','6145','6147'],immob:['2321','2332','2340','2351','2352','2355'],vente:['7111','7121','7124']};
+'6111':'Achats de marchandises','6121':'Achats de matières premières','6125':'Achats non stockés (fournitures, eau, électricité, carburant)','6126':'Achats de travaux, études et prestations',
+'6131':'Locations et charges locatives','6133':'Entretien et réparations','6134':"Primes d'assurances",'6136':"Honoraires",'6142':'Transports','6143':'Déplacements, missions et réceptions','6144':'Publicité','6145':'Frais postaux et télécommunications','6147':'Services bancaires',
+'6167':'Impôts et taxes','6171':'Rémunérations du personnel','6174':'Charges sociales','6193':"Dotations d'exploitation aux amortissements",
+'7111':'Ventes de marchandises au Maroc','7121':'Ventes de biens produits au Maroc','7124':'Ventes de services produits au Maroc','7381':'Intérêts et produits assimilés'};
+const LISTS={achat:['6111','6121','6125','6126','6131','6133','6134','6136','6142','6143','6144','6145','6147','6167','6171','6174'],immob:['2321','2332','2340','2351','2352','2355'],vente:['7111','7121','7124']};
+const BANKACC=['6125','6131','6133','6134','6136','6142','6143','6144','6145','6147','6167','6171','6174','4441','4456','1111','7124','7381'];
 const RATE={'2321':4,'2332':10,'2340':20,'2351':10,'2352':10,'2355':20};
+/* Catégorisation automatique des opérations bancaires */
+const RULES=[[/loyer|location/i,'6131'],[/maroc telecom|\biam\b|orange|inwi|internet|t[ée]l[ée]phone/i,'6145'],[/frais|commission|agios|tenue de compte|cotisation carte/i,'6147'],[/cnss|damancom/i,'4441'],[/salaire|paie/i,'6171'],[/\bdgi\b|tva|imp[oô]t|taxe/i,'4456'],[/lydec|redal|amendis|onee|radee|eau|[ée]lectricit/i,'6125'],[/assurance|saham|axa|rma|wafa ?ass/i,'6134'],[/carburant|afriquia|shell|petrom|gasoil|winxo/i,'6125'],[/publicit|facebook|google|meta ads/i,'6144'],[/honoraire|avocat|notaire|expert/i,'6136']];
+const JNAME={AC:'Achats',VT:'Ventes',BQ:'Banque',CA:'Caisse',OD:'Opérations diverses'};
 
-let S={info:{nom:'',ice:'',year:new Date().getFullYear(),capital:0},inv:[]};
-try{const d=JSON.parse(localStorage.getItem('compta-ma'));if(d)S=Object.assign(S,d)}catch(e){}
-const save=()=>{try{localStorage.setItem('compta-ma',JSON.stringify(S))}catch(e){}};
+/* ===== Données ===== */
+const KEY='compta-ma-v2';
+const blank=()=>({info:{nom:'',ice:'',if_:'',rc:'',adr:'',tel:'',year:new Date().getFullYear(),capital:0,regime:'encaissement',delai:60},tiers:[],inv:[],bank:[]});
+let S=null;
+try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}
+if(!S){S=blank();
+  try{const old=JSON.parse(localStorage.getItem('compta-ma'));
+    if(old){Object.assign(S.info,old.info||{});
+      (old.inv||[]).forEach(f=>{if(typeof f.pay==='string'){if(f.pay){f.payMode=f.pay;f.payDate=f.date}delete f.pay}S.inv.push(f)})}}catch(e){}}
+S=Object.assign(blank(),S);S.info=Object.assign(blank().info,S.info);
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){alert('ما قدرش يحفظ الداتا فهاد المتصفح.')}};
+
+/* ===== Outils ===== */
 const $=id=>document.getElementById(id);
-const r2=n=>Math.round(n*100)/100;
-const fmt=n=>(n||0).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2});
-const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const r2=n=>Math.round((+n||0)*100)/100;
+const fmt=n=>(+n||0).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const tbl=(h,rows)=>`<div class="scroll"><table><thead><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
+const uid=()=>Date.now()*1000+Math.floor(Math.random()*1000);
+const today=()=>new Date().toISOString().slice(0,10);
+const addDays=(d,n)=>{const x=new Date(d);if(isNaN(x))return '';x.setDate(x.getDate()+(+n||0));return x.toISOString().slice(0,10)};
+const daysBetween=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
+const accName=c=>ACC[c]||'';
+const accOpts=(list,sel)=>list.map(c=>`<option value="${c}"${c===sel?' selected':''}>${c} - ${accName(c)}</option>`).join('');
+function download(name,content,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove()}
+function num(s){s=String(s).replace(/\s/g,'').replace(/[^\d.,]/g,'');
+  if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');else s=s.replace(/\.(?=.*\.)/g,'');return parseFloat(s)}
 
-/* Onglets */
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
-  document.querySelectorAll('nav button,.tab').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on');$(b.dataset.t).classList.add('on');render();});
+/* ===== Tiers ===== */
+const tierType=t=>t==='vente'?'client':'fournisseur';
+function ensureTier(name,ice,type){if(!name)return null;
+  let t=S.tiers.find(x=>x.type===type&&x.nom.toLowerCase()===name.toLowerCase());
+  if(!t){t={id:uid(),type,nom:name,ice:ice||'',tel:'',email:''};S.tiers.push(t)}else if(ice&&!t.ice)t.ice=ice;return t}
+S.inv.forEach(f=>{f.tiers=f.tiers||'';ensureTier(f.tiers,f.ice,tierType(f.type))});
 
-/* Formulaire */
-function fillAccounts(){const t=$('type').value;
-  $('compte').innerHTML=LISTS[t].map(c=>`<option value="${c}">${c} - ${ACC[c]}</option>`).join('');
+/* ===== Onglets ===== */
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#nav button,.tab').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');$(b.dataset.t).classList.add('on');render();window.scrollTo(0,0)});
+function goTab(t){document.querySelector(`#nav button[data-t="${t}"]`).click()}
+
+/* ===== Saisie ===== */
+function fillAccounts(sel){const t=$('type').value;
+  $('compte').innerHTML=accOpts(LISTS[t],sel);
   $('amWrap').style.display=t==='immob'?'block':'none';
-  $('tiersLbl').textContent=t==='vente'?'الزبون (Client)':'المورد (Fournisseur)';setRate();}
+  $('tiersLbl').textContent=t==='vente'?'الزبون (Client)':'المورد (Fournisseur)';
+  setRate();fillDatalist()}
 function setRate(){$('taux').value=RATE[$('compte').value]||''}
+function fillDatalist(){const tt=tierType($('type').value);$('tiersList').innerHTML=S.tiers.filter(t=>t.type===tt).map(t=>`<option value="${esc(t.nom)}">`).join('')}
 function fromHT(){const ht=+$('ht').value||0,t=+$('tva').value;$('mtva').value=r2(ht*t/100).toFixed(2);$('ttc').value=r2(ht*(1+t/100)).toFixed(2)}
 function fromTTC(){const ttc=+$('ttc').value||0,t=+$('tva').value,ht=r2(ttc/(1+t/100));$('ht').value=ht.toFixed(2);$('mtva').value=r2(ttc-ht).toFixed(2)}
-$('type').onchange=fillAccounts;$('compte').onchange=setRate;
+function suggestFromTier(){const name=$('tiers').value.trim(),tt=tierType($('type').value);
+  const t=S.tiers.find(x=>x.type===tt&&x.nom.toLowerCase()===name.toLowerCase());if(!t)return;
+  if(t.ice&&!$('ice').value)$('ice').value=t.ice;
+  const last=S.inv.filter(f=>f.tiers.toLowerCase()===name.toLowerCase()&&f.type===$('type').value).pop();
+  if(last){$('compte').value=last.compte;$('tva').value=last.rate;setRate();fromHT();$('msg').innerHTML='<span class="muted">💡 خديت الحساب و TVA من آخر فاكتورة ديال هاد '+(tt==='client'?'الكليان':'المورد')+'.</span>'}}
+$('type').onchange=()=>fillAccounts();$('compte').onchange=setRate;
 $('ht').oninput=fromHT;$('tva').onchange=fromHT;$('ttc').oninput=fromTTC;
+$('tiers').onchange=suggestFromTier;
+$('date').onchange=()=>{if(!$('ech').dataset.touched)$('ech').value=addDays($('date').value,S.info.delai)};
+$('ech').oninput=()=>{$('ech').dataset.touched='1'};
 
-$('save').onclick=()=>{const ht=+$('ht').value;
-  if(!$('date').value||!ht){alert('خاص التاريخ والمبلغ');return}
-  const t=+$('tva').value;
-  S.inv.push({id:Date.now(),type:$('type').value,date:$('date').value,num:$('num').value.trim(),tiers:$('tiers').value.trim(),
-    ice:$('ice').value.trim(),des:$('des').value.trim(),compte:$('compte').value,taux:+$('taux').value||0,
-    ht:r2(ht),rate:t,tva:r2(ht*t/100),ttc:r2(ht*(1+t/100)),pay:$('pay').value});
-  /* Exercice automatique: ياخد العام من تاريخ الفاكتورة */
-  const fy=+$('date').value.slice(0,4);
-  let note='';
-  if(fy!==+S.info.year){S.info.year=fy;loadInfo();note=' | Exercice تبدل لـ '+fy;}
+$('save').onclick=()=>{const ht=+$('ht').value,date=$('date').value;
+  if(!date||!ht){$('msg').innerHTML='<div class="alert a-ko">عمّر التاريخ و Montant HT قبل ما تسجل.</div>';return}
+  const t=+$('tva').value,type=$('type').value,tiers=$('tiers').value.trim(),num=$('num').value.trim();
+  if(num&&S.inv.some(x=>x.num===num&&x.type===type&&x.tiers.toLowerCase()===tiers.toLowerCase())
+     &&!confirm('هاد الفاكتورة مسجلة من قبل (نفس الرقم ونفس '+(type==='vente'?'الكليان':'المورد')+'). واش تزيدها مرة أخرى؟'))return;
+  const pay=$('pay').value;
+  const f={id:uid(),type,date,num,tiers,ice:$('ice').value.trim(),des:$('des').value.trim(),compte:$('compte').value,
+    taux:type==='immob'?(+$('taux').value||0):0,ht:r2(ht),rate:t,tva:r2(ht*t/100),ttc:r2(ht*(1+t/100)),
+    ech:$('ech').value||addDays(date,S.info.delai),payMode:pay,payDate:pay?date:''};
+  S.inv.push(f);ensureTier(tiers,f.ice,tierType(type));
+  const fy=+date.slice(0,4);let note='';
+  if(fy!==+S.info.year){S.info.year=fy;note=' | Exercice تبدل لـ '+fy}
   save();['num','tiers','ice','des','ht','mtva','ttc'].forEach(i=>$(i).value='');
-  $('msg').textContent='✓ تسجلات الفاكتورة'+note;render();};
+  delete $('ech').dataset.touched;$('ech').value=addDays($('date').value,S.info.delai);
+  $('msg').innerHTML='<div class="alert a-ok">✓ تسجلات الفاكتورة'+note+'</div>';render()};
 
-/* Lecture de la photo (OCR) */
+/* ===== OCR ===== */
 $('photo').onchange=()=>{const f=$('photo').files[0];if(!f)return;$('preview').src=URL.createObjectURL(f);$('preview').style.display='block'};
 $('ocr').onclick=async()=>{const f=$('photo').files[0];
-  if(!f){alert('اختار صورة الفاكتورة أولا');return}
-  if(!window.Tesseract){$('ocrMsg').textContent='ما تحمّلش برنامج القراءة، تأكد من الأنترنت.';return}
+  if(!f){$('ocrMsg').textContent='اختار صورة الفاكتورة أولا.';return}
+  if(!window.Tesseract){$('ocrMsg').textContent='ما تحمّلش برنامج القراءة، تأكد من الأنترنت وعاود حلّ الصفحة.';return}
   $('ocrMsg').textContent='كيقرا الفاكتورة… (ممكن ياخد شي دقيقة)';
   try{const {data:{text}}=await Tesseract.recognize(f,'fra',{logger:m=>{if(m.status==='recognizing text')$('ocrMsg').textContent='كيقرا… '+Math.round(m.progress*100)+'%'}});
     parse(text);$('ocrMsg').textContent='✓ تقرات. راجع المعلومات قبل ما تسجل.';
   }catch(e){$('ocrMsg').textContent='ما قدرش يقرا الصورة. عمّر المعلومات يدويا.'}};
-function num(s){s=s.replace(/\s/g,'').replace(/[^\d.,]/g,'');
-  if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');else s=s.replace(/\.(?=.*\.)/g,'');return parseFloat(s)}
 function amountAfter(t,re){for(const line of t.split('\n').reverse()){if(re.test(line)){const m=line.match(/\d[\d\s.,]*\d/g);if(m){const v=num(m[m.length-1]);if(v)return v}}}return null}
 function parse(t){
-  const d=t.match(/(\d{2})[\/.-](\d{2})[\/.-](\d{4})/);if(d)$('date').value=`${d[3]}-${d[2]}-${d[1]}`;
-  const ice=t.match(/I\.?C\.?E\D{0,6}(\d{15})/i);if(ice)$('ice').value=ice[1];
+  const d=t.match(/(\d{2})[\/.-](\d{2})[\/.-](\d{4})/);if(d){$('date').value=`${d[3]}-${d[2]}-${d[1]}`;$('date').onchange()}
+  const ice=t.match(/I\.?C\.?E\D{0,6}(\d{15})/i);
+  if(ice){$('ice').value=ice[1];const known=S.tiers.find(x=>x.ice===ice[1]);if(known){$('tiers').value=known.nom}}
   const n=t.match(/factur\w*[ \t]*(?:n[ \t]*[°o][ \t]*)?[:#]?[ \t]*([A-Z0-9][A-Z0-9\/-]*\d[A-Z0-9\/-]*)/i);if(n)$('num').value=n[1];
   if(!$('tiers').value){const first=t.split('\n').map(s=>s.trim()).find(s=>s.length>2);if(first)$('tiers').value=first.slice(0,60)}
   const rate=t.match(/\b(20|14|10|7)\s*%/);if(rate)$('tva').value=rate[1];
   const ht=amountAfter(t,/(total|montant)\s*h\.?\s*t|\bH\.?T\.?\b/i),ttc=amountAfter(t,/t\.?\s*t\.?\s*c|net\s*[àa]\s*payer/i);
   if(ht&&ttc&&!rate){const r=Math.round((ttc/ht-1)*100);if([20,14,10,7,0].includes(r))$('tva').value=r}
-  if(ht){$('ht').value=ht;fromHT()}else if(ttc){$('ttc').value=ttc;fromTTC()}}
+  if(ht){$('ht').value=ht;fromHT()}else if(ttc){$('ttc').value=ttc;fromTTC()}
+  suggestFromTier()}
 
-/* Amortissement linéaire (prorata par mois) */
+/* ===== Amortissement linéaire (prorata mensuel) ===== */
 function plan(f){const rows=[];if(!f.taux)return rows;
   const d=new Date(f.date),annual=f.ht*f.taux/100;let y=d.getFullYear(),m=12-d.getMonth(),cum=0;
   while(cum<f.ht-0.005&&rows.length<100){const dot=r2(Math.min(annual*m/12,f.ht-cum));cum=r2(cum+dot);rows.push({y,dot,cum,vnc:r2(f.ht-cum)});y++;m=12}
   return rows}
 
-/* Écritures comptables */
-function entries(){const E=[],add=(date,lib,lines)=>E.push({date,lib,lines:lines.filter(l=>l[1]||l[2])});
-  if(S.info.capital>0)add('0000-01-01','Apport en capital',[['5141',S.info.capital,0],['1111',0,S.info.capital]]);
-  S.inv.forEach(f=>{const L=('Fact. '+(f.num||'')+' '+(f.tiers||'')).trim();
-    if(f.type==='achat'){add(f.date,L,[[f.compte,f.ht,0],['34552',f.tva,0],['4411',0,f.ttc]]);
-      if(f.pay)add(f.date,'Règlement '+L,[['4411',f.ttc,0],[f.pay,0,f.ttc]])}
-    if(f.type==='immob'){add(f.date,L,[[f.compte,f.ht,0],['34551',f.tva,0],['4481',0,f.ttc]]);
-      if(f.pay)add(f.date,'Règlement '+L,[['4481',f.ttc,0],[f.pay,0,f.ttc]]);
-      plan(f).forEach(p=>add(p.y+'-12-31','Dotation '+(f.des||ACC[f.compte]),[['6193',p.dot,0],['283'+f.compte[2],0,p.dot]]))}
-    if(f.type==='vente'){add(f.date,L,[['3421',f.ttc,0],[f.compte,0,f.ht],['4455',0,f.tva]]);
-      if(f.pay)add(f.date,'Encaissement '+L,[[f.pay,f.ttc,0],['3421',0,f.ttc]])}});
+/* ===== Écritures ===== */
+function entries(){const E=[];
+  const add=(j,date,lib,lines)=>{lines=lines.filter(l=>Math.abs(l[1])>0.004||Math.abs(l[2])>0.004);if(lines.length)E.push({j,date,lib,lines})};
+  if(S.info.capital>0)add('OD','0000-01-01','Apport en capital',[['5141',S.info.capital,0],['1111',0,S.info.capital]]);
+  S.inv.forEach(f=>{const L=('Fact. '+(f.num||'')+' '+(f.tiers||'')).trim(),pj=f.payMode==='5161'?'CA':'BQ',pd=f.payDate||f.date;
+    if(f.type==='achat'){add('AC',f.date,L,[[f.compte,f.ht,0],['34552',f.tva,0],['4411',0,f.ttc]]);
+      if(f.payMode)add(pj,pd,'Règlement '+L,[['4411',f.ttc,0],[f.payMode,0,f.ttc]])}
+    if(f.type==='immob'){add('AC',f.date,L,[[f.compte,f.ht,0],['34551',f.tva,0],['4481',0,f.ttc]]);
+      if(f.payMode)add(pj,pd,'Règlement '+L,[['4481',f.ttc,0],[f.payMode,0,f.ttc]]);
+      plan(f).forEach(p=>add('OD',p.y+'-12-31','Dotation '+(f.des||accName(f.compte)),[['6193',p.dot,0],['283'+f.compte[2],0,p.dot]]))}
+    if(f.type==='vente'){add('VT',f.date,L,[['3421',f.ttc,0],[f.compte,0,f.ht],['4455',0,f.tva]]);
+      if(f.payMode)add(pj,pd,'Encaissement '+L,[[f.payMode,f.ttc,0],['3421',0,f.ttc]])}});
+  S.bank.forEach(b=>{if(b.match||!b.compte)return;const a=Math.abs(b.amount),j=b.acct==='5161'?'CA':'BQ';
+    if(b.amount>0)add(j,b.date,b.lib,[[b.acct,a,0],[b.compte,0,a]]);else add(j,b.date,b.lib,[[b.compte,a,0],[b.acct,0,a]])});
   return E.sort((a,b)=>a.date.localeCompare(b.date))}
+function cpcOf(Y){const cpc={};let ch=0,pr=0;
+  entries().filter(e=>e.date.startsWith(Y)).forEach(e=>e.lines.forEach(([c,d,cr])=>{
+    if(c[0]==='6'){cpc[c]=(cpc[c]||0)+d-cr;ch+=d-cr}else if(c[0]==='7'){cpc[c]=(cpc[c]||0)+cr-d;pr+=cr-d}}));
+  return{cpc,ch:r2(ch),pr:r2(pr),res:r2(pr-ch)}}
+function soldeAcct(acc,upTo){let s=0;entries().filter(e=>e.date<=upTo).forEach(e=>e.lines.forEach(([c,d,cr])=>{if(c===acc)s+=d-cr}));return r2(s)}
+const isPaid=f=>!!f.payMode;
+const dueDate=f=>f.ech||addDays(f.date,S.info.delai);
 
-/* Affichage */
-function renderList(){
-  const rows=S.inv.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(f=>`<tr><td>${f.date}</td><td>${f.type}</td><td>${esc(f.num)}</td><td>${esc(f.tiers)}</td><td class="n">${fmt(f.ht)}</td><td class="n">${fmt(f.tva)}</td><td class="n">${fmt(f.ttc)}</td><td>${f.pay?'✓':'-'}</td><td><button class="ko" onclick="del(${f.id})">✕</button></td></tr>`);
-  $('listOut').innerHTML='<h2>Factures</h2>'+(S.inv.length?tbl(['Date','Type','N°','Tiers','HT','TVA','TTC','Réglée',''],rows):'<p class="muted">ما كاين حتى فاكتورة. سجّل الأولى من Saisie.</p>')}
-function del(id){if(confirm('تمسح هاد الفاكتورة؟')){S.inv=S.inv.filter(f=>f.id!==id);save();render()}}
+/* ===== TVA (avec report du crédit) ===== */
+function tvaMonths(Y){const M=Array.from({length:12},()=>({f:0,c:0,i:0}));
+  S.inv.forEach(f=>{const d=S.info.regime==='encaissement'?f.payDate:f.date;if(!d||!d.startsWith(Y))return;
+    const m=M[+d.slice(5,7)-1];if(f.type==='vente')m.f+=f.tva;else if(f.type==='achat')m.c+=f.tva;else m.i+=f.tva});
+  let credit=0;return M.map(m=>{const prev=credit,due=r2(m.f-m.c-m.i-prev);let pay=0;if(due>=0){pay=due;credit=0}else credit=-due;return{...m,prev,pay,credit}})}
 
-function renderJournal(){const Y=String(S.info.year);let td=0,tc=0;const rows=[];
-  entries().filter(e=>e.date.startsWith(Y)).forEach(e=>e.lines.forEach(([c,d,cr],i)=>{td+=d;tc+=cr;
-    rows.push(`<tr><td>${i?'':e.date}</td><td class="acc">${c}</td><td>${ACC[c]||''}</td><td>${i?'':esc(e.lib)}</td><td class="n">${d?fmt(d):''}</td><td class="n">${cr?fmt(cr):''}</td></tr>`)}));
-  rows.push(`<tr class="tot"><td colspan="4">Total</td><td class="n">${fmt(td)}</td><td class="n">${fmt(tc)}</td></tr>`);
-  $('jOut').innerHTML=`<h2>Journal ${Y}</h2>`+tbl(['Date','Compte','Intitulé du compte','Libellé','Débit','Crédit'],rows)}
+/* ===== Tableau de bord ===== */
+function renderDash(){const Y=String(S.info.year),now=today();
+  const inY=S.inv.filter(f=>f.date.startsWith(Y));
+  const ca=r2(inY.filter(f=>f.type==='vente').reduce((s,f)=>s+f.ht,0));
+  const ach=r2(inY.filter(f=>f.type==='achat').reduce((s,f)=>s+f.ht,0));
+  const {res}=cpcOf(Y);
+  const bq=soldeAcct('5141','9999'),cs=soldeAcct('5161','9999');
+  const cre=r2(S.inv.filter(f=>f.type==='vente'&&!isPaid(f)).reduce((s,f)=>s+f.ttc,0));
+  const det=r2(S.inv.filter(f=>f.type!=='vente'&&!isPaid(f)).reduce((s,f)=>s+f.ttc,0));
+  const tv=tvaMonths(Y),mi=new Date().getMonth(),curTva=Y===now.slice(0,4)?tv[mi]:tv[11];
+  const k=(l,v,cls='')=>`<div class="kpi"><div class="l">${l}</div><div class="v ${cls}">${fmt(v)} DH</div></div>`;
+  $('kpis').innerHTML=k('رقم المعاملات HT',ca)+k('المشتريات HT',ach)+k('النتيجة '+(res>=0?'(ربح)':'(خسارة)'),res,res>=0?'pos':'neg')+
+    k('البنكة',bq,bq<0?'neg':'')+k('الكاش',cs,cs<0?'neg':'')+k('عند الكليان (Créances)',cre)+k('للموردين (Dettes)',det)+
+    k('TVA '+(curTva.pay>0?'خاصها تتخلص':'Crédit'),curTva.pay>0?curTva.pay:curTva.credit,curTva.pay>0?'neg':'pos');
+  /* graphique */
+  const V=Array(12).fill(0),A=Array(12).fill(0);inY.forEach(f=>{const m=+f.date.slice(5,7)-1;if(f.type==='vente')V[m]+=f.ht;else if(f.type==='achat')A[m]+=f.ht});
+  const mx=Math.max(1,...V,...A),W=640,H=200,bw=18,gap=W/12;
+  let bars='';for(let i=0;i<12;i++){const x=i*gap+8,hv=V[i]/mx*(H-30),ha=A[i]/mx*(H-30);
+    bars+=`<rect x="${x}" y="${H-20-hv}" width="${bw}" height="${hv}" fill="#2F7D4F"><title>Ventes ${fmt(V[i])}</title></rect><rect x="${x+bw+2}" y="${H-20-ha}" width="${bw}" height="${ha}" fill="#B23A3A"><title>Achats ${fmt(A[i])}</title></rect><text x="${x+bw}" y="${H-5}" text-anchor="middle">${i+1}</text>`}
+  $('chart').innerHTML=`<svg class="chart" viewBox="0 0 ${W} ${H}" style="width:100%;min-width:480px;direction:ltr" role="img" aria-label="Ventes et achats par mois"><line x1="0" y1="${H-20}" x2="${W}" y2="${H-20}" stroke="#D3DDD5"/>${bars}</svg><div class="muted"><span class="pos">■</span> Ventes &nbsp; <span class="neg">■</span> Achats</div>`;
+  /* alertes */
+  const al=[];
+  const lateF=S.inv.filter(f=>f.type!=='vente'&&!isPaid(f)&&dueDate(f)<now);
+  const lateC=S.inv.filter(f=>f.type==='vente'&&!isPaid(f)&&dueDate(f)<now);
+  const toJust=S.bank.filter(b=>!b.match&&!b.compte);
+  const noIce=S.inv.filter(f=>f.type!=='vente'&&!f.ice&&f.date.startsWith(Y));
+  if(lateF.length)al.push(`<div class="alert a-ko">⏰ ${lateF.length} فاكتورة ديال الموردين فات الأجل ديالها (${fmt(lateF.reduce((s,f)=>s+f.ttc,0))} DH). القانون 69-21 كيفرض غرامات على التأخير. <button class="sm" onclick="goFact('unpaid')">شوف</button></div>`);
+  if(lateC.length)al.push(`<div class="alert a-w">📨 ${lateC.length} فاكتورة ديال الكليان ما تخلصاتش وفات الأجل (${fmt(lateC.reduce((s,f)=>s+f.ttc,0))} DH). خاصك تعاود تطلبهم. <button class="sm" onclick="goFact('unpaid')">شوف</button></div>`);
+  if(toJust.length)al.push(`<div class="alert a-w">📎 ${toJust.length} عملية بنكية بلا justificatif ولا حساب. <button class="sm" onclick="goTab('banque')">صنّفهم</button></div>`);
+  if(noIce.length)al.push(`<div class="alert a-w">🆔 ${noIce.length} فاكتورة ديال الشراء بلا ICE. الفاكتورة بلا ICE ممكن ما تقبلش فخصم TVA.</div>`);
+  if(curTva.pay>0)al.push(`<div class="alert a-w">🧮 TVA ديال هاد الشهر: ${fmt(curTva.pay)} DH خاصها تتصرح فـ SIMPL-TVA.</div>`);
+  if(!S.info.nom||!S.info.ice)al.push(`<div class="alert a-w">⚙️ كمّل المعلومات ديال الشركة (الاسم و ICE) فالإعدادات باش يبانو فالفواتير. <button class="sm" onclick="goTab('params')">الإعدادات</button></div>`);
+  $('alerts').innerHTML=al.length?al.join(''):'<div class="alert a-ok">✓ كلشي مزيان، ما كاين حتى تنبيه.</div>'}
+function goFact(f){$('fFilter').value=f;goTab('factures')}
 
+/* ===== Factures ===== */
+function renderList(){const flt=$('fFilter').value,q=$('fSearch').value.trim().toLowerCase(),now=today();
+  let L=S.inv.slice().sort((a,b)=>b.date.localeCompare(a.date));
+  if(flt==='unpaid')L=L.filter(f=>!isPaid(f));else if(flt!=='all')L=L.filter(f=>f.type===flt);
+  if(q)L=L.filter(f=>(f.num+' '+f.tiers+' '+f.des+' '+f.ice).toLowerCase().includes(q));
+  const T={achat:'Achat',immob:'Immob.',vente:'Vente'};
+  const rows=L.map(f=>{let st;
+    if(isPaid(f))st=`<span class="badge b-ok">تخلصات ${f.payDate}</span>`;
+    else if(dueDate(f)<now)st=`<span class="badge b-ko">متأخرة ${daysBetween(dueDate(f),now)} يوم</span>`;
+    else st=`<span class="badge b-w">قبل ${dueDate(f)}</span>`;
+    return `<tr><td>${f.date}</td><td>${T[f.type]}</td><td>${esc(f.num)}</td><td>${esc(f.tiers)}</td><td class="n">${fmt(f.ht)}</td><td class="n">${fmt(f.tva)}</td><td class="n">${fmt(f.ttc)}</td><td>${st}</td><td>${isPaid(f)?`<button class="sm" onclick="unpay(${f.id})">إلغاء الخلاص</button>`:`<button class="sm main" onclick="openPay(${f.id})">خلّص</button>`} ${f.type==='vente'?`<button class="sm" onclick="printInv(${f.id})">🖨</button>`:''} <button class="sm ko" onclick="delInv(${f.id})">✕</button></td></tr>`});
+  $('listOut').innerHTML=L.length?tbl(['Date','Type','N°','Tiers','HT','TVA','TTC','الحالة',''],rows):'<p class="muted">ما كاين حتى فاكتورة هنا. سجّل فاكتورة من Saisie.</p>'}
+$('fFilter').onchange=renderList;$('fSearch').oninput=renderList;
+let payId=null;
+function openPay(id){const f=S.inv.find(x=>x.id===id);payId=id;$('payInfo').textContent=`${f.num||''} ${f.tiers||''} | ${fmt(f.ttc)} DH`;$('pdDate').value=today();$('payDlg').showModal()}
+$('pdNo').onclick=()=>$('payDlg').close();
+$('pdOk').onclick=()=>{const f=S.inv.find(x=>x.id===payId);if(f&&$('pdDate').value){f.payDate=$('pdDate').value;f.payMode=$('pdMode').value;save();render()}$('payDlg').close()};
+function unpay(id){const f=S.inv.find(x=>x.id===id);if(!f||!confirm('تلغي الخلاص ديال هاد الفاكتورة؟'))return;f.payMode='';f.payDate='';S.bank.forEach(b=>{if(b.match===id)b.match=null});save();render()}
+function delInv(id){if(!confirm('تمسح هاد الفاكتورة؟'))return;S.inv=S.inv.filter(f=>f.id!==id);S.bank.forEach(b=>{if(b.match===id)b.match=null});save();render()}
+function printInv(id){const f=S.inv.find(x=>x.id===id),I=S.info;
+  $('print').innerHTML=`<div dir="ltr" style="font-family:Arial,sans-serif;color:#000;padding:24px;max-width:760px;margin:auto">
+  <table style="width:100%"><tr><td style="vertical-align:top"><h2 style="margin:0">${esc(I.nom||'Ma société')}</h2><div>${esc(I.adr)}</div><div>Tél : ${esc(I.tel)}</div></td>
+  <td style="text-align:right;vertical-align:top"><h1 style="margin:0">FACTURE</h1><div>N° ${esc(f.num)}</div><div>Date : ${f.date}</div><div>Échéance : ${dueDate(f)}</div></td></tr></table>
+  <div style="margin:24px 0;padding:12px;border:1px solid #999"><b>Client :</b> ${esc(f.tiers)}<br>ICE : ${esc(f.ice)}</div>
+  <table style="width:100%;border-collapse:collapse" border="1" cellpadding="8"><tr style="background:#eee"><th style="text-align:left">Désignation</th><th style="text-align:right">Montant HT</th></tr>
+  <tr><td>${esc(f.des||accName(f.compte))}</td><td style="text-align:right">${fmt(f.ht)}</td></tr></table>
+  <table style="margin-left:auto;margin-top:12px;min-width:260px" cellpadding="6"><tr><td>Total HT</td><td style="text-align:right">${fmt(f.ht)} DH</td></tr>
+  <tr><td>TVA ${f.rate} %</td><td style="text-align:right">${fmt(f.tva)} DH</td></tr><tr><td><b>Total TTC</b></td><td style="text-align:right"><b>${fmt(f.ttc)} DH</b></td></tr></table>
+  <p style="margin-top:24px">Arrêtée la présente facture à la somme de ${fmt(f.ttc)} dirhams TTC.</p>
+  <p style="margin-top:40px;font-size:12px;border-top:1px solid #999;padding-top:8px">${esc(I.nom)} | ICE : ${esc(I.ice)} | IF : ${esc(I.if_)} | RC : ${esc(I.rc)}</p></div>`;
+  window.print()}
+
+/* ===== Tiers ===== */
+function renderTiers(){const build=type=>{const L=S.tiers.filter(t=>t.type===type).sort((a,b)=>a.nom.localeCompare(b.nom));
+    const rows=L.map(t=>{const inv=S.inv.filter(f=>f.tiers.toLowerCase()===t.nom.toLowerCase()&&tierType(f.type)===type);
+      const tot=inv.reduce((s,f)=>s+f.ttc,0),paid=inv.filter(isPaid).reduce((s,f)=>s+f.ttc,0),rest=r2(tot-paid);
+      return `<tr><td>${esc(t.nom)}</td><td>${esc(t.ice)}</td><td>${esc(t.tel)}</td><td class="n">${inv.length}</td><td class="n">${fmt(tot)}</td><td class="n ${rest>0?'neg':''}">${fmt(rest)}</td><td><button class="sm ko" onclick="delTier(${t.id})">✕</button></td></tr>`});
+    return `<h2>${type==='fournisseur'?'Fournisseurs':'Clients'} (${L.length})</h2>`+(L.length?tbl(['الاسم','ICE','التيليفون','فواتير','المجموع TTC','الباقي',''],rows):'<p class="muted">ما كاين حتى واحد. كيتزادو بوحدهم ملي تسجل فاكتورة، ولا زيدهم من الفورم لفوق.</p>')};
+  $('tOutF').innerHTML=build('fournisseur');$('tOutC').innerHTML=build('client')}
+$('tAdd').onclick=()=>{const nom=$('tNom').value.trim();if(!nom){$('tNom').focus();return}
+  const t=ensureTier(nom,$('tIce').value.trim(),$('tType').value);t.tel=$('tTel').value.trim()||t.tel;t.email=$('tMail').value.trim()||t.email;
+  ['tNom','tIce','tTel','tMail'].forEach(i=>$(i).value='');save();render()};
+function delTier(id){if(!confirm('تمسح هاد الـ tiers؟ الفواتير ديالو غادي يبقاو.'))return;S.tiers=S.tiers.filter(t=>t.id!==id);save();render()}
+
+/* ===== Banque ===== */
+function parseAmt(s){s=String(s||'').trim();if(!s)return 0;const neg=/^-|-$|^\(.*\)$/.test(s.replace(/\s/g,''));const v=num(s);return isNaN(v)?0:(neg?-v:v)}
+function parseDate(s){s=String(s||'').trim();let m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return `${m[1]}-${m[2]}-${m[3]}`;
+  m=s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/);if(m){const y=m[3].length===2?'20'+m[3]:m[3];return `${y}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`}return null}
+function categorize(b){for(const[re,c]of RULES)if(re.test(b.lib))return c;return null}
+function autoMatch(){let n=0;
+  S.bank.filter(b=>!b.match&&!b.compte).forEach(b=>{const isIn=b.amount>0;
+    const c=S.inv.filter(f=>!isPaid(f)&&(isIn?f.type==='vente':f.type!=='vente')&&Math.abs(f.ttc-Math.abs(b.amount))<0.01)
+      .sort((x,y)=>Math.abs(new Date(x.date)-new Date(b.date))-Math.abs(new Date(y.date)-new Date(b.date)))[0];
+    if(c){c.payMode=b.acct;c.payDate=b.date;b.match=c.id;n++}});return n}
+function autoCat(){let n=0;S.bank.filter(b=>!b.match&&!b.compte).forEach(b=>{const c=categorize(b);if(c){b.compte=c;n++}});return n}
+$('bFile').onchange=()=>{const file=$('bFile').files[0];if(!file)return;const rd=new FileReader();
+  rd.onload=()=>{const lines=String(rd.result).split(/\r?\n/).filter(l=>l.trim());if(!lines.length)return;
+    const sep=lines[0].includes(';')?';':lines[0].includes('\t')?'\t':',';let added=0;
+    lines.forEach(l=>{const c=l.split(sep).map(x=>x.replace(/^"|"$/g,'').trim());const date=parseDate(c[0]);if(!date||c.length<3)return;
+      const amount=c.length>=4?r2(parseAmt(c[3])-parseAmt(c[2])):r2(parseAmt(c[2]));if(!amount)return;
+      S.bank.push({id:uid(),date,lib:c[1]||'',amount,acct:$('bAcct').value,match:null,compte:null});added++});
+    const m=autoMatch(),k=autoCat();save();render();
+    $('bMsg').textContent=`✓ تزادو ${added} عملية. ${m} تربطو بالفواتير، و ${k} تصنفو أوتوماتيكيا.`;$('bFile').value=''};
+  rd.readAsText(file,'UTF-8')};
+$('bAdd').onclick=()=>{const date=$('bDate').value,amount=r2(+$('bAmt').value);if(!date||!amount){$('bMsg').textContent='عمّر التاريخ والمبلغ.';return}
+  S.bank.push({id:uid(),date,lib:$('bLib').value.trim(),amount,acct:$('bAcct').value,match:null,compte:null});
+  const m=autoMatch(),k=autoCat();save();render();['bLib','bAmt'].forEach(i=>$(i).value='');
+  $('bMsg').textContent='✓ تزادت العملية.'+(m?' تربطات بفاكتورة.':k?' تصنفات أوتوماتيكيا.':' اختار ليها الحساب من الجدول.')};
+$('bMatch').onclick=()=>{const m=autoMatch(),k=autoCat();save();render();$('bMsg').textContent=`✓ ${m} عملية تربطات بالفواتير، و ${k} تصنفات.`};
+function setBankAcc(id,v){const b=S.bank.find(x=>x.id===id);if(b){b.compte=v||null;save();render()}}
+function delBank(id){const b=S.bank.find(x=>x.id===id);if(!b||!confirm('تمسح هاد العملية؟'))return;
+  if(b.match){const f=S.inv.find(x=>x.id===b.match);if(f){f.payMode='';f.payDate=''}}S.bank=S.bank.filter(x=>x.id!==id);save();render()}
+function renderBank(){const L=S.bank.slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const rows=L.map(b=>{let st;
+    if(b.match){const f=S.inv.find(x=>x.id===b.match);st=`<span class="badge b-ok">🔗 Fact. ${esc(f?f.num:'')} ${esc(f?f.tiers:'')}</span>`}
+    else st=`<select onchange="setBankAcc(${b.id},this.value)" style="min-width:200px"><option value="">⚠ à justifier</option>${accOpts(BANKACC,b.compte)}</select>`;
+    return `<tr><td>${b.date}</td><td>${esc(b.lib)}</td><td class="n ${b.amount<0?'neg':'pos'}">${fmt(b.amount)}</td><td>${b.acct}</td><td>${st}</td><td><button class="sm ko" onclick="delBank(${b.id})">✕</button></td></tr>`});
+  const nj=L.filter(b=>!b.match&&!b.compte).length;
+  $('bOut').innerHTML=`<h2>العمليات (${L.length})${nj?` <span class="badge b-w">${nj} à justifier</span>`:''}</h2>`+(L.length?tbl(['Date','Libellé','Montant','Compte','Rapprochement / Catégorie',''],rows):'<p class="muted">ما كاين حتى عملية. حمّل relevé ولا زيد عملية لفوق.</p>')}
+
+/* ===== Journal ===== */
+function renderJournal(){const Y=String(S.info.year),jf=$('jFilter').value;let td=0,tc=0;const rows=[];
+  entries().filter(e=>e.date.startsWith(Y)&&(!jf||e.j===jf)).forEach(e=>e.lines.forEach(([c,d,cr],i)=>{td+=d;tc+=cr;
+    rows.push(`<tr><td>${i?'':e.j}</td><td>${i?'':e.date}</td><td class="acc">${c}</td><td>${accName(c)}</td><td>${i?'':esc(e.lib)}</td><td class="n">${d?fmt(d):''}</td><td class="n">${cr?fmt(cr):''}</td></tr>`)}));
+  rows.push(`<tr class="tot"><td colspan="5">Total</td><td class="n">${fmt(td)}</td><td class="n">${fmt(tc)}</td></tr>`);
+  $('jOut').innerHTML=`<h2>Journal ${jf?JNAME[jf]:''} ${Y}</h2>`+tbl(['Jnl','Date','Compte','Intitulé du compte','Libellé','Débit','Crédit'],rows)}
+$('jFilter').onchange=renderJournal;
+
+/* ===== Balance & Grand livre ===== */
+function renderBalance(){const Y=String(S.info.year),M={};
+  entries().filter(e=>e.date.startsWith(Y)).forEach(e=>e.lines.forEach(([c,d,cr])=>{M[c]=M[c]||{d:0,c:0};M[c].d+=d;M[c].c+=cr}));
+  let T={d:0,c:0,sd:0,sc:0};
+  const rows=Object.keys(M).sort().map(c=>{const m=M[c],s=r2(m.d-m.c);T.d+=m.d;T.c+=m.c;if(s>0)T.sd+=s;else T.sc-=s;
+    return `<tr class="click" onclick="gl('${c}')"><td class="acc">${c}</td><td>${accName(c)}</td><td class="n">${fmt(m.d)}</td><td class="n">${fmt(m.c)}</td><td class="n">${s>0?fmt(s):''}</td><td class="n">${s<0?fmt(-s):''}</td></tr>`});
+  rows.push(`<tr class="tot"><td colspan="2">Total</td><td class="n">${fmt(T.d)}</td><td class="n">${fmt(T.c)}</td><td class="n">${fmt(T.sd)}</td><td class="n">${fmt(T.sc)}</td></tr>`);
+  $('balOut').innerHTML=`<h2>Balance générale ${Y}</h2>`+tbl(['Compte','Intitulé','Mvt Débit','Mvt Crédit','Solde D','Solde C'],rows)}
+function gl(acc){const Y=String(S.info.year);let s=0;const rows=[];
+  entries().filter(e=>e.date.startsWith(Y)).forEach(e=>e.lines.forEach(([c,d,cr])=>{if(c!==acc)return;s+=d-cr;
+    rows.push(`<tr><td>${e.date}</td><td>${e.j}</td><td>${esc(e.lib)}</td><td class="n">${d?fmt(d):''}</td><td class="n">${cr?fmt(cr):''}</td><td class="n">${fmt(s)}</td></tr>`)}));
+  $('glOut').innerHTML=`<h2>Grand livre: ${acc} ${accName(acc)}</h2>`+tbl(['Date','Jnl','Libellé','Débit','Crédit','Solde'],rows);
+  $('glOut').scrollIntoView({behavior:'smooth'})}
+
+/* ===== Amortissements ===== */
 function renderAmort(){const Y=+S.info.year,rows=[];
   S.inv.filter(f=>f.type==='immob').forEach(f=>{
-    rows.push(`<tr class="tot"><td colspan="4">${esc(f.des||ACC[f.compte])} | ${f.date} | ${fmt(f.ht)} DH | ${f.taux}%</td></tr>`);
+    rows.push(`<tr class="tot"><td colspan="4">${esc(f.des||accName(f.compte))} | ${f.date} | ${fmt(f.ht)} DH | ${f.taux}%</td></tr>`);
     plan(f).forEach(p=>rows.push(`<tr${p.y===Y?' style="background:#E8EEE9"':''}><td>${p.y}</td><td class="n">${fmt(p.dot)}</td><td class="n">${fmt(p.cum)}</td><td class="n">${fmt(p.vnc)}</td></tr>`))});
   $('aOut').innerHTML="<h2>Plan d'amortissement</h2>"+(rows.length?tbl(['Année','Dotation','Cumul','VNC'],rows):'<p class="muted">ما كاين حتى immobilisation.</p>')}
 
-function renderTVA(){const Y=String(S.info.year),M=Array.from({length:12},()=>({f:0,c:0,i:0}));
-  S.inv.filter(f=>f.date.startsWith(Y)).forEach(f=>{const m=M[+f.date.slice(5,7)-1];
-    if(f.type==='vente')m.f+=f.tva;else if(f.type==='achat')m.c+=f.tva;else m.i+=f.tva});
-  const T={f:0,c:0,i:0},show=d=>d<0?'Crédit '+fmt(-d):fmt(d);
-  const rows=M.map((m,k)=>{T.f+=m.f;T.c+=m.c;T.i+=m.i;const d=r2(m.f-m.c-m.i);
-    return `<tr><td>${String(k+1).padStart(2,'0')}/${Y}</td><td class="n">${fmt(m.f)}</td><td class="n">${fmt(m.c)}</td><td class="n">${fmt(m.i)}</td><td class="n">${show(d)}</td></tr>`});
-  rows.push(`<tr class="tot"><td>Total</td><td class="n">${fmt(T.f)}</td><td class="n">${fmt(T.c)}</td><td class="n">${fmt(T.i)}</td><td class="n">${show(r2(T.f-T.c-T.i))}</td></tr>`);
-  $('tOut').innerHTML=`<h2>TVA ${Y}</h2>`+tbl(['Mois','TVA facturée','Récup. charges','Récup. immob.','TVA due'],rows)+
-    '<p class="muted">حساب تقريبي على حساب تاريخ الفاكتورة. فالمغرب الخصم ديال TVA كيكون فالشهر اللي تخلصات فيه الفاكتورة، والتصريح كيتدار فـ SIMPL-TVA.</p>'}
+/* ===== TVA ===== */
+function renderTVA(){const Y=String(S.info.year),M=tvaMonths(Y),T={f:0,c:0,i:0,pay:0};
+  const rows=M.map((m,k)=>{T.f+=m.f;T.c+=m.c;T.i+=m.i;T.pay+=m.pay;
+    return `<tr><td>${String(k+1).padStart(2,'0')}/${Y}</td><td class="n">${fmt(m.f)}</td><td class="n">${fmt(m.c)}</td><td class="n">${fmt(m.i)}</td><td class="n">${fmt(m.prev)}</td><td class="n ${m.pay>0?'neg':''}">${fmt(m.pay)}</td><td class="n pos">${m.credit?fmt(m.credit):''}</td></tr>`});
+  rows.push(`<tr class="tot"><td>Total</td><td class="n">${fmt(T.f)}</td><td class="n">${fmt(T.c)}</td><td class="n">${fmt(T.i)}</td><td></td><td class="n">${fmt(T.pay)}</td><td></td></tr>`);
+  $('tvOut').innerHTML=`<h2>TVA ${Y} (Régime ${S.info.regime==='encaissement'?'encaissement':'débit'})</h2>`+
+    tbl(['Mois','TVA facturée','Récup. charges','Récup. immob.','Crédit reporté','TVA à payer','Crédit'],rows)+
+    `<p class="muted">${S.info.regime==='encaissement'?'الحساب على حساب تاريخ الخلاص: الفواتير اللي ما تخلصاتش ما كتدخلش.':'الحساب على حساب تاريخ الفاكتورة.'} الكريدي ديال TVA كيتنقل للشهر اللي من بعد. التصريح كيتدار فـ SIMPL-TVA.</p>`}
 
-function renderBilan(){const Y=+S.info.year,end=Y+'-12-31',B={},res={cur:0,prev:0},cpc={},am={};
+/* ===== Bilan & CPC ===== */
+function renderBilan(){const Y=+S.info.year,end=Y+'-12-31',B={},res={cur:0,prev:0},am={};
   entries().filter(e=>e.date<=end).forEach(e=>{const cur=e.date.startsWith(String(Y));
-    e.lines.forEach(([c,d,cr])=>{
-      if(c[0]==='6'||c[0]==='7'){const v=cr-d;if(cur){res.cur+=v;cpc[c]=(cpc[c]||0)+(c[0]==='6'?d-cr:v)}else res.prev+=v}
-      else B[c]=(B[c]||0)+d-cr})});
+    e.lines.forEach(([c,d,cr])=>{if(c[0]==='6'||c[0]==='7'){const v=cr-d;if(cur)res.cur+=v;else res.prev+=v}else B[c]=(B[c]||0)+d-cr})});
   S.inv.filter(f=>f.type==='immob').forEach(f=>plan(f).filter(p=>p.y<=Y).forEach(p=>am[f.compte]=(am[f.compte]||0)+p.dot));
   const A=[],P=[];let tA=0,tP=0;
-  const rowA=(c,b,a)=>{const n=b-a;tA+=n;A.push(`<tr><td>${c} ${ACC[c]||''}</td><td class="n">${fmt(b)}</td><td class="n">${a?fmt(a):''}</td><td class="n">${fmt(n)}</td></tr>`)};
+  const rowA=(c,b,a)=>{const n=b-a;tA+=n;A.push(`<tr><td>${c} ${accName(c)}</td><td class="n">${fmt(b)}</td><td class="n">${a?fmt(a):''}</td><td class="n">${fmt(n)}</td></tr>`)};
   const rowP=(c,lbl,v)=>{tP+=v;P.push(`<tr><td>${c} ${lbl}</td><td class="n">${fmt(v)}</td></tr>`)};
   const K=Object.keys(B).sort(),nz=c=>Math.abs(B[c])>0.004;
   K.filter(c=>c[0]==='2'&&!c.startsWith('28')).forEach(c=>rowA(c,B[c],am[c]||0));
   K.filter(c=>c[0]==='3'&&nz(c)).forEach(c=>rowA(c,B[c],0));
   K.filter(c=>c[0]==='5'&&B[c]>0.004).forEach(c=>rowA(c,B[c],0));
-  K.filter(c=>c[0]==='1').forEach(c=>rowP(c,ACC[c],-B[c]));
-  rowP('1161',ACC['1161'],r2(res.prev));rowP('1191',ACC['1191'],r2(res.cur));
-  K.filter(c=>c[0]==='4'&&nz(c)).forEach(c=>rowP(c,ACC[c],-B[c]));
-  K.filter(c=>c[0]==='5'&&B[c]<-0.004).forEach(c=>rowP(c,'Crédits de trésorerie ('+ACC[c]+')',-B[c]));
-  const okB=Math.abs(tA-tP)<0.01;
-  $('bOut').innerHTML=`<h2>Bilan au 31/12/${Y}</h2><h3>Actif</h3>`+
+  K.filter(c=>c[0]==='1').forEach(c=>rowP(c,accName(c),-B[c]));
+  rowP('1161',accName('1161'),r2(res.prev));rowP('1191',accName('1191'),r2(res.cur));
+  K.filter(c=>c[0]==='4'&&nz(c)).forEach(c=>rowP(c,accName(c),-B[c]));
+  K.filter(c=>c[0]==='5'&&B[c]<-0.004).forEach(c=>rowP(c,'Crédits de trésorerie ('+accName(c)+')',-B[c]));
+  const ok=Math.abs(tA-tP)<0.01;
+  $('biOut').innerHTML=`<h2>Bilan au 31/12/${Y}</h2><h3>Actif</h3>`+
     tbl(['Poste','Brut','Amort.','Net'],[...A,`<tr class="tot"><td colspan="3">Total Actif</td><td class="n">${fmt(tA)}</td></tr>`])+
     '<h3>Passif</h3>'+tbl(['Poste','Montant'],[...P,`<tr class="tot"><td>Total Passif</td><td class="n">${fmt(tP)}</td></tr>`])+
-    `<p class="${okB?'ok':'ko'}">${okB?'✓ Bilan équilibré':'⚠ الفرق: '+fmt(tA-tP)}</p>`;
-  let ch=0,pr=0;
-  const C=Object.keys(cpc).sort().map(c=>{const v=cpc[c];if(c[0]==='6')ch+=v;else pr+=v;
-    return `<tr><td>${c} ${ACC[c]||''}</td><td class="n">${c[0]==='6'?fmt(v):''}</td><td class="n">${c[0]==='7'?fmt(v):''}</td></tr>`});
+    `<div class="alert ${ok?'a-ok':'a-ko'}">${ok?'✓ Bilan équilibré':'⚠ الفرق: '+fmt(tA-tP)}</div>`;
+  const {cpc,ch,pr}=cpcOf(String(Y));
+  const C=Object.keys(cpc).sort().map(c=>`<tr><td>${c} ${accName(c)}</td><td class="n">${c[0]==='6'?fmt(cpc[c]):''}</td><td class="n">${c[0]==='7'?fmt(cpc[c]):''}</td></tr>`);
   C.push(`<tr class="tot"><td>Total</td><td class="n">${fmt(ch)}</td><td class="n">${fmt(pr)}</td></tr>`,
     `<tr class="tot"><td>Résultat net ${pr-ch>=0?'(Bénéfice)':'(Perte)'}</td><td class="n" colspan="2">${fmt(pr-ch)}</td></tr>`);
-  $('cOut').innerHTML=`<h2>CPC ${Y}</h2>`+tbl(['Compte','Charges','Produits'],C)+'<p class="muted">IS ما محسوبش هنا.</p>'}
+  $('cpcOut').innerHTML=`<h2>CPC ${Y}</h2>`+tbl(['Compte','Charges','Produits'],C)+'<p class="muted">IS ما محسوبش هنا.</p>'}
 
-function render(){renderList();renderJournal();renderAmort();renderTVA();renderBilan()}
+/* ===== Paramètres ===== */
+const PF={pNom:'nom',pIce:'ice',pIf:'if_',pRc:'rc',pTel:'tel',pAdr:'adr',pCap:'capital',pDelai:'delai',pReg:'regime'};
+function loadInfo(){Object.entries(PF).forEach(([id,k])=>$(id).value=S.info[k]??'');
+  $('soc').textContent=(S.info.nom||'شركتي')+(S.info.ice?' | ICE '+S.info.ice:'');
+  const ys=new Set([new Date().getFullYear(),+S.info.year]);S.inv.forEach(f=>ys.add(+f.date.slice(0,4)));S.bank.forEach(b=>ys.add(+b.date.slice(0,4)));
+  $('ySel').innerHTML=[...ys].filter(Boolean).sort().map(y=>`<option${y===+S.info.year?' selected':''}>${y}</option>`).join('')}
+$('ySel').onchange=()=>{S.info.year=+$('ySel').value;save();render()};
+$('pSave').onclick=()=>{Object.entries(PF).forEach(([id,k])=>S.info[k]=$(id).value.trim());
+  S.info.capital=+S.info.capital||0;S.info.delai=+S.info.delai||60;save();render();alert('تحفظ ✓')};
+$('csv').onclick=()=>{const L=[['Journal','Date','Compte','Intitulé','Libellé','Débit','Crédit']];
+  entries().forEach(e=>e.lines.forEach(([c,d,cr])=>L.push([e.j,e.date.startsWith('0000')?'Ouverture':e.date,c,accName(c),e.lib,String(d).replace('.',','),String(cr).replace('.',',')])));
+  download('journal.csv','\uFEFF'+L.map(l=>l.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n'),'text/csv')};
+$('bkOut').onclick=()=>download('compta-sauvegarde-'+today()+'.json',JSON.stringify(S),'application/json');
+$('bkIn').onchange=()=>{const file=$('bkIn').files[0];if(!file)return;const rd=new FileReader();
+  rd.onload=()=>{try{const d=JSON.parse(rd.result);if(!d.inv||!d.info)throw 0;
+    if(!confirm('غادي تبدل الداتا الحالية بالداتا ديال الملف. متأكد؟'))return;
+    S=Object.assign(blank(),d);S.info=Object.assign(blank().info,d.info);save();render();alert('✓ ترجعات الداتا')}
+    catch(e){alert('هاد الملف ماشي Sauvegarde ديال هاد السيت.')}$('bkIn').value=''};rd.readAsText(file)};
+$('reset').onclick=()=>{if(confirm('غادي تمسح جميع الفواتير، Tiers والعمليات البنكية. دير Sauvegarde قبل. متأكد؟')){const info=S.info;S=blank();S.info=info;save();render()}};
 
-/* Paramètres */
-function loadInfo(){$('pNom').value=S.info.nom;$('pIce').value=S.info.ice;$('pYear').value=S.info.year;$('pCap').value=S.info.capital||'';
-  $('soc').textContent=(S.info.nom||'شركتي')+(S.info.ice?' | ICE '+S.info.ice:'')+' | Exercice '+S.info.year}
-$('pSave').onclick=()=>{S.info={nom:$('pNom').value.trim(),ice:$('pIce').value.trim(),year:+$('pYear').value||new Date().getFullYear(),capital:+$('pCap').value||0};
-  save();loadInfo();render();alert('تحفظ ✓')};
-$('csv').onclick=()=>{const L=[['Date','Compte','Intitulé','Libellé','Débit','Crédit']];
-  entries().forEach(e=>e.lines.forEach(([c,d,cr])=>L.push([e.date.startsWith('0000')?'Ouverture':e.date,c,ACC[c]||'',e.lib,d,cr])));
-  const csv='\uFEFF'+L.map(l=>l.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n');
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='journal.csv';a.click()};
-$('reset').onclick=()=>{if(confirm('غادي تمسح جميع الفواتير. متأكد؟')){S.inv=[];save();render()}};
-
-$('date').valueAsDate=new Date();fillAccounts();loadInfo();render();
+/* ===== Rendu ===== */
+function render(){loadInfo();renderDash();renderList();renderTiers();renderBank();renderJournal();renderBalance();renderAmort();renderTVA();renderBilan();fillDatalist()}
+$('date').value=today();$('ech').value=addDays(today(),S.info.delai);$('bDate').value=today();
+fillAccounts();save();render();
 </script>
 </body>
 </html>
