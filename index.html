@@ -38,6 +38,7 @@ th{background:var(--soft);font-size:.8rem}
 td.n{text-align:left;direction:ltr}
 td.acc{font-weight:700}
 tr.tot td{font-weight:700;border-top:2px solid var(--ink)}
+tr.sep td{border-top:2px solid var(--in)}
 tr.click{cursor:pointer}tr.click:hover{background:var(--soft)}
 .muted{opacity:.7;font-size:.84rem}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
@@ -536,7 +537,7 @@ function renderBank(){const L=S.bank.slice().sort((a,b)=>b.date.localeCompare(a.
 /* ===== Journal ===== */
 function renderJournal(){const Y=String(S.info.year),jf=$('jFilter').value;let td=0,tc=0;const rows=[];
   entries().filter(e=>e.date.startsWith(Y)&&(!jf||e.j===jf)).forEach(e=>e.lines.forEach(([c,d,cr],i)=>{td+=d;tc+=cr;
-    rows.push(`<tr><td>${i?'':e.j}</td><td>${i?'':e.date}</td><td class="acc">${c}</td><td>${accName(c)}</td><td>${i?'':esc(e.lib)}</td><td class="n">${d?fmt(d):''}</td><td class="n">${cr?fmt(cr):''}</td></tr>`)}));
+    rows.push(`<tr${!i&&rows.length?' class="sep"':''}><td>${i?'':e.j}</td><td>${i?'':e.date}</td><td class="acc">${c}</td><td>${accName(c)}</td><td>${i?'':esc(e.lib)}</td><td class="n">${d?fmt(d):''}</td><td class="n">${cr?fmt(cr):''}</td></tr>`)}));
   rows.push(`<tr class="tot"><td colspan="5">Total</td><td class="n">${fmt(td)}</td><td class="n">${fmt(tc)}</td></tr>`);
   $('jOut').innerHTML=`<h2>Journal ${jf?JNAME[jf]:''} ${Y}</h2>`+tbl(['Jnl','Date','Compte','Intitulé du compte','Libellé','Débit','Crédit'],rows)}
 $('jFilter').onchange=renderJournal;
