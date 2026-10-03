@@ -46,7 +46,9 @@ tr.click{cursor:pointer}tr.click:hover{background:var(--soft)}
 .kpi .l{font-size:.8rem;opacity:.75}
 .kpi .v{font-size:1.2rem;font-weight:700;direction:ltr;text-align:right;margin-top:4px}
 .pos{color:var(--in)}.neg{color:var(--out)}
-.alert{padding:9px 12px;border-radius:8px;margin:6px 0;border:1px solid}
+.alert{padding:9px 12px;border-radius:8px;margin:6px 0;border:1px solid;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.alert>div{flex:1;min-width:0}
+.alert .when{font-size:.76rem;opacity:.8;white-space:nowrap;direction:ltr}
 .a-w{background:#FFF7E6;border-color:#EBD3A0;color:var(--warn)}
 .a-ko{background:#FBEDED;border-color:#E9BDBD;color:var(--out)}
 .a-ok{background:#EAF5EE;border-color:#BFDCC9;color:var(--in)}
@@ -235,7 +237,7 @@ const JNAME={AC:'Achats',VT:'Ventes',BQ:'Banque',CA:'Caisse',OD:'Opérations div
 
 /* ===== Données ===== */
 const KEY='compta-ma-v2';
-const blank=()=>({info:{nom:'',ice:'',if_:'',rc:'',adr:'',tel:'',year:new Date().getFullYear(),capital:0,regime:'encaissement',delai:60},tiers:[],inv:[],bank:[]});
+const blank=()=>({info:{nom:'',ice:'',if_:'',rc:'',adr:'',tel:'',year:new Date().getFullYear(),capital:0,regime:'encaissement',delai:60},tiers:[],inv:[],bank:[],seen:{}});
 let S=null;
 try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}
 if(!S){S=blank();
@@ -389,17 +391,20 @@ function renderDash(){const Y=String(S.info.year),now=today();
     bars+=`<rect x="${x}" y="${H-20-hv}" width="${bw}" height="${hv}" fill="#2F7D4F"><title>Ventes ${fmt(V[i])}</title></rect><rect x="${x+bw+2}" y="${H-20-ha}" width="${bw}" height="${ha}" fill="#B23A3A"><title>Achats ${fmt(A[i])}</title></rect><text x="${x+bw}" y="${H-5}" text-anchor="middle">${i+1}</text>`}
   $('chart').innerHTML=`<svg class="chart" viewBox="0 0 ${W} ${H}" style="width:100%;min-width:480px;direction:ltr" role="img" aria-label="Ventes et achats par mois"><line x1="0" y1="${H-20}" x2="${W}" y2="${H-20}" stroke="#D3DDD5"/>${bars}</svg><div class="muted"><span class="pos">■</span> Ventes &nbsp; <span class="neg">■</span> Achats</div>`;
   /* alertes */
-  const al=[];
+  const al=[],live={};
+  const stamp=(k,sig)=>{live[k]=1;const o=S.seen[k];if(!o||typeof o!=='object'||o.sig!==sig)S.seen[k]={sig,t:new Date().toISOString()};const d=new Date(S.seen[k].t);return d.toLocaleDateString('fr-FR')+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})};
+  const push=(k,cls,html,sig='')=>al.push(`<div class="alert ${cls}"><div>${html}</div><span class="when">🕒 ${stamp(k,String(sig))}</span></div>`);
   const lateF=S.inv.filter(f=>f.type!=='vente'&&!isPaid(f)&&dueDate(f)<now);
   const lateC=S.inv.filter(f=>f.type==='vente'&&!isPaid(f)&&dueDate(f)<now);
   const toJust=S.bank.filter(b=>!b.match&&!b.compte);
   const noIce=S.inv.filter(f=>f.type!=='vente'&&!f.ice&&f.date.startsWith(Y));
-  if(lateF.length)al.push(`<div class="alert a-ko">⏰ ${lateF.length} فاكتورة ديال الموردين فات الأجل ديالها (${fmt(lateF.reduce((s,f)=>s+f.ttc,0))} DH). القانون 69-21 كيفرض غرامات على التأخير. <button class="sm" onclick="goFact('unpaid')">شوف</button></div>`);
-  if(lateC.length)al.push(`<div class="alert a-w">📨 ${lateC.length} فاكتورة ديال الكليان ما تخلصاتش وفات الأجل (${fmt(lateC.reduce((s,f)=>s+f.ttc,0))} DH). خاصك تعاود تطلبهم. <button class="sm" onclick="goFact('unpaid')">شوف</button></div>`);
-  if(toJust.length)al.push(`<div class="alert a-w">📎 ${toJust.length} عملية بنكية بلا justificatif ولا حساب. <button class="sm" onclick="goTab('banque')">صنّفهم</button></div>`);
-  if(noIce.length)al.push(`<div class="alert a-w">🆔 ${noIce.length} فاكتورة ديال الشراء بلا ICE. الفاكتورة بلا ICE ممكن ما تقبلش فخصم TVA.</div>`);
-  if(curTva.pay>0)al.push(`<div class="alert a-w">🧮 TVA ديال هاد الشهر: ${fmt(curTva.pay)} DH خاصها تتصرح فـ SIMPL-TVA.</div>`);
-  if(!S.info.nom||!S.info.ice)al.push(`<div class="alert a-w">⚙️ كمّل المعلومات ديال الشركة (الاسم و ICE) فالإعدادات باش يبانو فالفواتير. <button class="sm" onclick="goTab('params')">الإعدادات</button></div>`);
+  if(lateF.length)push('lateF','a-ko',`⏰ ${lateF.length} فاكتورة ديال الموردين فات الأجل ديالها (${fmt(lateF.reduce((s,f)=>s+f.ttc,0))} DH). القانون 69-21 كيفرض غرامات على التأخير. <button class="sm" onclick="goFact('unpaid')">شوف</button>`,lateF.map(f=>f.id).join());
+  if(lateC.length)push('lateC','a-w',`📨 ${lateC.length} فاكتورة ديال الكليان ما تخلصاتش وفات الأجل (${fmt(lateC.reduce((s,f)=>s+f.ttc,0))} DH). خاصك تعاود تطلبهم. <button class="sm" onclick="goFact('unpaid')">شوف</button>`,lateC.map(f=>f.id).join());
+  if(toJust.length)push('toJust','a-w',`📎 ${toJust.length} عملية بنكية بلا justificatif ولا حساب. <button class="sm" onclick="goTab('banque')">صنّفهم</button>`,toJust.map(b=>b.id).join());
+  if(noIce.length)push('noIce','a-w',`🆔 ${noIce.length} فاكتورة ديال الشراء بلا ICE. الفاكتورة بلا ICE ممكن ما تقبلش فخصم TVA.`,noIce.map(f=>f.id).join());
+  if(curTva.pay>0)push('tva','a-w',`🧮 TVA ديال هاد الشهر: ${fmt(curTva.pay)} DH خاصها تتصرح فـ SIMPL-TVA.`,curTva.pay);
+  if(!S.info.nom||!S.info.ice)push('info','a-w',`⚙️ كمّل المعلومات ديال الشركة (الاسم و ICE) فالإعدادات باش يبانو فالفواتير. <button class="sm" onclick="goTab('params')">الإعدادات</button>`);
+  Object.keys(S.seen).forEach(k=>{if(!live[k])delete S.seen[k]});save();
   $('alerts').innerHTML=al.length?al.join(''):'<div class="alert a-ok">✓ كلشي مزيان، ما كاين حتى تنبيه.</div>'}
 function goFact(f){$('fFilter').value=f;goTab('factures')}
 
