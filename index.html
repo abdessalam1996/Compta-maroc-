@@ -14,7 +14,8 @@ body{margin:0;font-family:"IBM Plex Sans Arabic",Tahoma,Arial,sans-serif;backgro
 header{background:var(--ink);color:var(--w);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 header h1{margin:0;font-size:1.2rem}
 header .sub{font-size:.85rem;opacity:.8}
-header select{width:auto;padding:6px 10px;background:var(--w)}
+header select{width:auto;max-width:200px;padding:6px 10px;background:var(--w)}
+.hctl{display:flex;gap:10px;flex-wrap:wrap}.hctl label{margin:0;color:#fff;font-weight:600}
 nav{display:flex;gap:6px;overflow-x:auto;padding:8px 12px;background:#E3EAE4;position:sticky;top:0;z-index:5;border-bottom:1px solid var(--line)}
 nav button{flex:none;padding:8px 11px}
 main{max-width:980px;margin:0 auto;padding:14px}
@@ -66,9 +67,10 @@ dialog::backdrop{background:rgba(31,58,95,.4)}
 <body>
 <header>
   <div><h1>Compta Maroc Pro</h1><div class="sub" id="soc"></div></div>
-  <label style="margin:0;color:#fff">Exercice <select id="ySel"></select></label>
+  <div class="hctl"><label>🗂 الدوسي <select id="dSel"></select></label><label>Exercice <select id="ySel"></select></label></div>
 </header>
 <nav id="nav">
+  <button data-t="dossiers">🗂 Dossiers</button>
   <button class="on" data-t="dash">📊 لوحة القيادة</button>
   <button data-t="saisie">📷 Saisie</button>
   <button data-t="factures">🧾 Factures</button>
@@ -82,6 +84,16 @@ dialog::backdrop{background:rgba(31,58,95,.4)}
   <button data-t="params">⚙️ الإعدادات</button>
 </nav>
 <main>
+
+<section id="dossiers" class="tab">
+  <div class="card grid">
+    <h2 class="full">زيد دوسي ديال شركة جديدة</h2>
+    <div><label for="dNom">اسم الشركة</label><input id="dNom"></div>
+    <div><label for="dIce">ICE</label><input id="dIce" maxlength="15" inputmode="numeric"></div>
+    <button class="main full" id="dAdd" type="button">زيد الدوسي</button>
+  </div>
+  <div class="card" id="dOut"></div>
+</section>
 
 <section id="dash" class="tab on">
   <div class="kpis" id="kpis"></div>
@@ -193,14 +205,14 @@ dialog::backdrop{background:rgba(31,58,95,.4)}
   </div>
   <div class="card">
     <h2>الحفظ والنقل</h2>
-    <p class="muted">الداتا محفوظة غير فهاد المتصفح. دير Sauvegarde باش تحتافظ بنسخة، ولا باش تنقل الداتا من البيسي للتيليفون (Restaurer فالجهاز الآخر).</p>
+    <p class="muted">الداتا محفوظة غير فهاد المتصفح. Sauvegarde كتحمّل جميع الدوسيات فملف واحد، باش تحتافظ بنسخة ولا تنقلهم لجهاز آخر (Restaurer فالجهاز الآخر).</p>
     <div class="row">
       <button id="bkOut" type="button">💾 Sauvegarde (تحميل)</button>
       <div><label for="bkIn">♻️ Restaurer من ملف</label><input type="file" id="bkIn" accept=".json"></div>
     </div>
     <div class="row">
       <button id="csv" type="button">تحميل Journal (Excel / CSV)</button>
-      <button class="ko" id="reset" type="button">مسح كلشي</button>
+      <button class="ko" id="reset" type="button">مسح الداتا ديال هاد الدوسي</button>
     </div>
   </div>
 </section>
@@ -235,18 +247,6 @@ const RATE={'2321':4,'2332':10,'2340':20,'2351':10,'2352':10,'2355':20};
 const RULES=[[/loyer|location/i,'6131'],[/maroc telecom|\biam\b|orange|inwi|internet|t[ée]l[ée]phone/i,'6145'],[/frais|commission|agios|tenue de compte|cotisation carte/i,'6147'],[/cnss|damancom/i,'4441'],[/salaire|paie/i,'6171'],[/\bdgi\b|tva|imp[oô]t|taxe/i,'4456'],[/lydec|redal|amendis|onee|radee|eau|[ée]lectricit/i,'6125'],[/assurance|saham|axa|rma|wafa ?ass/i,'6134'],[/carburant|afriquia|shell|petrom|gasoil|winxo/i,'6125'],[/publicit|facebook|google|meta ads/i,'6144'],[/honoraire|avocat|notaire|expert/i,'6136']];
 const JNAME={AC:'Achats',VT:'Ventes',BQ:'Banque',CA:'Caisse',OD:'Opérations diverses'};
 
-/* ===== Données ===== */
-const KEY='compta-ma-v2';
-const blank=()=>({info:{nom:'',ice:'',if_:'',rc:'',adr:'',tel:'',year:new Date().getFullYear(),capital:0,regime:'encaissement',delai:60},tiers:[],inv:[],bank:[],seen:{}});
-let S=null;
-try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}
-if(!S){S=blank();
-  try{const old=JSON.parse(localStorage.getItem('compta-ma'));
-    if(old){Object.assign(S.info,old.info||{});
-      (old.inv||[]).forEach(f=>{if(typeof f.pay==='string'){if(f.pay){f.payMode=f.pay;f.payDate=f.date}delete f.pay}S.inv.push(f)})}}catch(e){}}
-S=Object.assign(blank(),S);S.info=Object.assign(blank().info,S.info);
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){alert('ما قدرش يحفظ الداتا فهاد المتصفح.')}};
-
 /* ===== Outils ===== */
 const $=id=>document.getElementById(id);
 const r2=n=>Math.round((+n||0)*100)/100;
@@ -263,12 +263,57 @@ function download(name,content,type){const a=document.createElement('a');a.href=
 function num(s){s=String(s).replace(/\s/g,'').replace(/[^\d.,]/g,'');
   if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');else s=s.replace(/\.(?=.*\.)/g,'');return parseFloat(s)}
 
+/* ===== Données : plusieurs dossiers ===== */
+const blank=()=>({info:{nom:'',ice:'',if_:'',rc:'',adr:'',tel:'',year:new Date().getFullYear(),capital:0,regime:'encaissement',delai:60},tiers:[],inv:[],bank:[],seen:{}});
+const IDX='compta-ma-idx',dkey=id=>'compta-ma-d-'+id;
+let IDXD=null;
+try{IDXD=JSON.parse(localStorage.getItem(IDX))}catch(e){IDXD=null}
+if(!IDXD||!IDXD.list||!IDXD.list.length){
+  let first=null;try{first=JSON.parse(localStorage.getItem('compta-ma-v2'))}catch(e){}
+  if(!first){first=blank();
+    try{const old=JSON.parse(localStorage.getItem('compta-ma'));
+      if(old){Object.assign(first.info,old.info||{});
+        (old.inv||[]).forEach(f=>{if(typeof f.pay==='string'){if(f.pay){f.payMode=f.pay;f.payDate=f.date}delete f.pay}first.inv.push(f)})}}catch(e){}}
+  const id=String(uid());IDXD={current:id,list:[{id,nom:(first.info&&first.info.nom)||'الدوسي 1',upd:new Date().toISOString()}]};
+  try{localStorage.setItem(dkey(id),JSON.stringify(first));localStorage.setItem(IDX,JSON.stringify(IDXD))}catch(e){}}
+if(!IDXD.list.some(x=>x.id===IDXD.current))IDXD.current=IDXD.list[0].id;
+function readDossier(id){let d=null;try{d=JSON.parse(localStorage.getItem(dkey(id)))}catch(e){}
+  d=Object.assign(blank(),d||{});d.info=Object.assign(blank().info,d.info||{});d.seen=d.seen||{};d.inv.forEach(f=>{f.tiers=f.tiers||''});return d}
+let S=readDossier(IDXD.current);
+const save=()=>{try{localStorage.setItem(dkey(IDXD.current),JSON.stringify(S));
+  const e=IDXD.list.find(x=>x.id===IDXD.current);if(e){if(S.info.nom)e.nom=S.info.nom;e.upd=new Date().toISOString()}
+  localStorage.setItem(IDX,JSON.stringify(IDXD))}catch(e){alert('ما قدرش يحفظ الداتا فهاد المتصفح.')}};
+
 /* ===== Tiers ===== */
 const tierType=t=>t==='vente'?'client':'fournisseur';
 function ensureTier(name,ice,type){if(!name)return null;
   let t=S.tiers.find(x=>x.type===type&&x.nom.toLowerCase()===name.toLowerCase());
   if(!t){t={id:uid(),type,nom:name,ice:ice||'',tel:'',email:''};S.tiers.push(t)}else if(ice&&!t.ice)t.ice=ice;return t}
-S.inv.forEach(f=>{f.tiers=f.tiers||'';ensureTier(f.tiers,f.ice,tierType(f.type))});
+const syncTiers=()=>S.inv.forEach(f=>ensureTier(f.tiers,f.ice,tierType(f.type)));syncTiers();
+
+/* ===== Dossiers (cabinet) ===== */
+function switchDossier(id){if(id===IDXD.current)return;save();IDXD.current=id;S=readDossier(id);syncTiers();save();
+  ['msg','bMsg'].forEach(i=>$(i).textContent='');$('glOut').innerHTML='<p class="muted">ضغط على شي حساب فالـ Balance باش يبان ليك Grand livre ديالو.</p>';render()}
+function dStats(d){const now=today(),due=f=>f.ech||addDays(f.date,d.info.delai);
+  return{n:d.inv.length,lateF:d.inv.filter(f=>f.type!=='vente'&&!f.payMode&&due(f)<now).length,lateC:d.inv.filter(f=>f.type==='vente'&&!f.payMode&&due(f)<now).length,
+    just:d.bank.filter(b=>!b.match&&!b.compte).length,noIce:d.inv.filter(f=>f.type!=='vente'&&!f.ice).length}}
+function renderDossiers(){
+  const rows=IDXD.list.map(x=>{const d=x.id===IDXD.current?S:readDossier(x.id),st=dStats(d),pb=st.lateF+st.lateC+st.just;
+    const badge=pb?`<span class="badge ${st.lateF?'b-ko':'b-w'}">${pb} تنبيه</span>`:'<span class="badge b-ok">مزيان</span>';
+    const upd=x.upd?new Date(x.upd).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'}):'';
+    return `<tr${x.id===IDXD.current?' style="background:#E8EEE9"':''}><td><b>${esc(d.info.nom||x.nom)}</b></td><td>${esc(d.info.ice)}</td><td class="n">${st.n}</td><td class="n">${st.lateF}</td><td class="n">${st.lateC}</td><td class="n">${st.just}</td><td>${badge}</td><td>${upd}</td>
+      <td>${x.id===IDXD.current?'<span class="muted">مفتوح</span>':`<button class="sm main" onclick="openDossier('${x.id}')">فتح</button>`} <button class="sm ko" onclick="delDossier('${x.id}')">✕</button></td></tr>`});
+  $('dOut').innerHTML=`<h2>الدوسيات ديال الشركات (${IDXD.list.length})</h2>`+tbl(['الشركة','ICE','فواتير','متأخرة موردين','متأخرة كليان','à justifier','الحالة','آخر تعديل',''],rows)}
+function openDossier(id){switchDossier(id);goTab('dash')}
+function delDossier(id){if(IDXD.list.length<2){alert('خاص يبقى على الأقل دوسي واحد.');return}
+  const x=IDXD.list.find(y=>y.id===id);if(!confirm('غادي تمسح الدوسي ديال "'+(x?x.nom:'')+'" بكامل الفواتير ديالو. دير Sauvegarde قبل. متأكد؟'))return;
+  IDXD.list=IDXD.list.filter(y=>y.id!==id);try{localStorage.removeItem(dkey(id))}catch(e){}
+  if(id===IDXD.current){IDXD.current=IDXD.list[0].id;S=readDossier(IDXD.current);syncTiers()}save();render()}
+$('dAdd').onclick=()=>{const nom=$('dNom').value.trim();if(!nom){$('dNom').focus();return}
+  const id=String(uid()),d=blank();d.info.nom=nom;d.info.ice=$('dIce').value.trim();
+  try{localStorage.setItem(dkey(id),JSON.stringify(d))}catch(e){}
+  IDXD.list.push({id,nom,upd:new Date().toISOString()});$('dNom').value='';$('dIce').value='';openDossier(id)};
+$('dSel').onchange=()=>{const v=$('dSel').value;if(v==='__new'){goTab('dossiers');$('dNom').focus();return}switchDossier(v)};
 
 /* ===== Onglets ===== */
 document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{
@@ -557,6 +602,7 @@ function renderBilan(){const Y=+S.info.year,end=Y+'-12-31',B={},res={cur:0,prev:
 const PF={pNom:'nom',pIce:'ice',pIf:'if_',pRc:'rc',pTel:'tel',pAdr:'adr',pCap:'capital',pDelai:'delai',pReg:'regime'};
 function loadInfo(){Object.entries(PF).forEach(([id,k])=>$(id).value=S.info[k]??'');
   $('soc').textContent=(S.info.nom||'شركتي')+(S.info.ice?' | ICE '+S.info.ice:'');
+  $('dSel').innerHTML=IDXD.list.map(x=>`<option value="${x.id}"${x.id===IDXD.current?' selected':''}>${esc(x.id===IDXD.current?(S.info.nom||x.nom):x.nom)}</option>`).join('')+'<option value="__new">➕ دوسي جديد</option>';
   const ys=new Set([new Date().getFullYear(),+S.info.year]);S.inv.forEach(f=>ys.add(+f.date.slice(0,4)));S.bank.forEach(b=>ys.add(+b.date.slice(0,4)));
   $('ySel').innerHTML=[...ys].filter(Boolean).sort().map(y=>`<option${y===+S.info.year?' selected':''}>${y}</option>`).join('')}
 $('ySel').onchange=()=>{S.info.year=+$('ySel').value;save();render()};
@@ -565,16 +611,22 @@ $('pSave').onclick=()=>{Object.entries(PF).forEach(([id,k])=>S.info[k]=$(id).val
 $('csv').onclick=()=>{const L=[['Journal','Date','Compte','Intitulé','Libellé','Débit','Crédit']];
   entries().forEach(e=>e.lines.forEach(([c,d,cr])=>L.push([e.j,e.date.startsWith('0000')?'Ouverture':e.date,c,accName(c),e.lib,String(d).replace('.',','),String(cr).replace('.',',')])));
   download('journal.csv','\uFEFF'+L.map(l=>l.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n'),'text/csv')};
-$('bkOut').onclick=()=>download('compta-sauvegarde-'+today()+'.json',JSON.stringify(S),'application/json');
+$('bkOut').onclick=()=>{save();const all={version:3,current:IDXD.current,dossiers:IDXD.list.map(x=>({id:x.id,nom:x.nom,upd:x.upd,data:readDossier(x.id)}))};download('compta-sauvegarde-'+today()+'.json',JSON.stringify(all),'application/json')};
 $('bkIn').onchange=()=>{const file=$('bkIn').files[0];if(!file)return;const rd=new FileReader();
-  rd.onload=()=>{try{const d=JSON.parse(rd.result);if(!d.inv||!d.info)throw 0;
-    if(!confirm('غادي تبدل الداتا الحالية بالداتا ديال الملف. متأكد؟'))return;
-    S=Object.assign(blank(),d);S.info=Object.assign(blank().info,d.info);save();render();alert('✓ ترجعات الداتا')}
+  rd.onload=()=>{try{const d=JSON.parse(rd.result);
+    if(Array.isArray(d.dossiers)){if(!confirm('هاد Sauvegarde فيها '+d.dossiers.length+' دوسي. غادي تبدل جميع الدوسيات اللي كاينين دابا. متأكد؟'))return;
+      IDXD.list.forEach(x=>{try{localStorage.removeItem(dkey(x.id))}catch(e){}});
+      IDXD={current:d.current,list:d.dossiers.map(x=>({id:String(x.id),nom:x.nom,upd:x.upd}))};
+      d.dossiers.forEach(x=>localStorage.setItem(dkey(String(x.id)),JSON.stringify(x.data)));
+      if(!IDXD.list.some(x=>x.id===IDXD.current))IDXD.current=IDXD.list[0].id;}
+    else if(d.inv&&d.info){const id=String(uid());localStorage.setItem(dkey(id),JSON.stringify(d));IDXD.list.push({id,nom:d.info.nom||'دوسي مستورد',upd:new Date().toISOString()});IDXD.current=id;}
+    else throw 0;
+    S=readDossier(IDXD.current);syncTiers();save();render();alert('✓ ترجعات الداتا')}
     catch(e){alert('هاد الملف ماشي Sauvegarde ديال هاد السيت.')}$('bkIn').value=''};rd.readAsText(file)};
-$('reset').onclick=()=>{if(confirm('غادي تمسح جميع الفواتير، Tiers والعمليات البنكية. دير Sauvegarde قبل. متأكد؟')){const info=S.info;S=blank();S.info=info;save();render()}};
+$('reset').onclick=()=>{if(confirm('غادي تمسح جميع الفواتير، Tiers والعمليات البنكية ديال هاد الدوسي. دير Sauvegarde قبل. متأكد؟')){const info=S.info;S=blank();S.info=info;save();render()}};
 
 /* ===== Rendu ===== */
-function render(){loadInfo();renderDash();renderList();renderTiers();renderBank();renderJournal();renderBalance();renderAmort();renderTVA();renderBilan();fillDatalist()}
+function render(){loadInfo();renderDossiers();renderDash();renderList();renderTiers();renderBank();renderJournal();renderBalance();renderAmort();renderTVA();renderBilan();fillDatalist()}
 $('date').value=today();$('ech').value=addDays(today(),S.info.delai);$('bDate').value=today();
 fillAccounts();save();render();
 </script>
