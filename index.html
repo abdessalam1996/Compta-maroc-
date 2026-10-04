@@ -16,7 +16,7 @@ header h1{margin:0;font-size:1.2rem}
 header .sub{font-size:.85rem;opacity:.8}
 header select{width:auto;max-width:200px;padding:6px 10px;background:var(--w)}
 .hctl{display:flex;gap:10px;flex-wrap:wrap}.hctl label{margin:0;color:#fff;font-weight:600}
-nav{display:flex;gap:6px;overflow-x:auto;padding:8px 12px;background:#E3EAE4;position:sticky;top:0;z-index:5;border-bottom:1px solid var(--line)}
+nav{display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;background:#E3EAE4;position:sticky;top:0;z-index:5;border-bottom:1px solid var(--line)}
 nav button{flex:none;padding:8px 11px}
 main{max-width:980px;margin:0 auto;padding:14px}
 h2{font-size:1.1rem;margin:0 0 10px}h3{font-size:.98rem;margin:14px 0 6px}
@@ -62,7 +62,7 @@ dialog::backdrop{background:rgba(31,58,95,.4)}
 .chart text{font-size:11px;fill:var(--ink)}
 #print{display:none}
 @media print{body>*:not(#print){display:none!important}#print{display:block}}
-@media(max-width:560px){.grid{grid-template-columns:1fr}header h1{font-size:1.05rem}}
+@media(max-width:560px){nav{position:static}.grid{grid-template-columns:1fr}header h1{font-size:1.05rem}}
 </style>
 </head>
 <body>
@@ -117,7 +117,7 @@ dialog::backdrop{background:rgba(31,58,95,.4)}
   </div>
   <div class="card grid">
     <div><label for="type">نوع العملية</label>
-      <select id="type"><option value="achat">Achat (مصروف)</option><option value="immob">Immobilisation (معدات)</option><option value="vente">Vente (مبيعات)</option></select></div>
+      <select id="type"><option value="achat">Achat (مصروف)</option><option value="loyer">Loyer (كراء)</option><option value="immob">Immobilisation (معدات)</option><option value="vente">Vente (مبيعات)</option></select></div>
     <div><label for="date">تاريخ الفاكتورة</label><input type="date" id="date"></div>
     <div><label for="num">رقم الفاكتورة</label><input id="num"></div>
     <div><label for="tiers" id="tiersLbl">المورد (Fournisseur)</label><input id="tiers" list="tiersList" autocomplete="off"><datalist id="tiersList"></datalist></div>
@@ -125,6 +125,13 @@ dialog::backdrop{background:rgba(31,58,95,.4)}
     <div><label for="des">Désignation</label><input id="des"></div>
     <div class="full"><label for="compte">الحساب (PCM)</label><select id="compte"></select></div>
     <div id="amWrap" class="full"><label for="taux">نسبة Amortissement % (linéaire)</label><input type="number" id="taux" step="0.01"></div>
+    <div id="loyWrap" class="full grid" style="display:none;background:var(--soft);padding:10px;border-radius:8px">
+      <div><label for="lBail">مول الملك (Bailleur)</label><select id="lBail"><option value="pp">شخص عادي (personne physique)</option><option value="pm">شركة (société)</option></select></div>
+      <div><label for="lLocal">نوع المحل</label><select id="lLocal"><option value="nu">خاوي (nu) - TVA 0%</option><option value="eq">مجهّز (équipé) - TVA 20%</option></select></div>
+      <div><label for="lRas">Retenue à la source %</label><input type="number" id="lRas" step="0.01"></div>
+      <div><label for="lMonths">شحال من شهر نسجل (كل شهر فاكتورة)</label><input type="number" id="lMonths" min="1" max="24" value="1"></div>
+      <p class="muted full" id="lNote" style="margin:0"></p>
+    </div>
     <div><label for="ht">Montant HT</label><input type="number" id="ht" step="0.01"></div>
     <div><label for="tva">Taux TVA %</label><select id="tva"><option>20</option><option>14</option><option>10</option><option>7</option><option>0</option></select></div>
     <div><label for="mtva">Montant TVA</label><input id="mtva" readonly></div>
@@ -140,10 +147,11 @@ dialog::backdrop{background:rgba(31,58,95,.4)}
 <section id="factures" class="tab"><div class="card">
   <h2>Factures</h2>
   <div class="row">
-    <div><label for="fFilter">عرض</label><select id="fFilter"><option value="all">الكل</option><option value="achat">Achats</option><option value="immob">Immobilisations</option><option value="vente">Ventes</option><option value="unpaid">ما تخلصاتش</option></select></div>
+    <div><label for="fFilter">عرض</label><select id="fFilter"><option value="all">الكل</option><option value="achat">Achats</option><option value="loyer">Loyers</option><option value="immob">Immobilisations</option><option value="vente">Ventes</option><option value="unpaid">ما تخلصاتش</option></select></div>
     <div><label for="fSearch">قلّب</label><input id="fSearch" placeholder="رقم، مورد، كليان…"></div>
   </div>
   <div id="listOut"></div>
+  <input type="file" id="attIn" accept="image/*,application/pdf" style="display:none">
 </div></section>
 
 <section id="tiersTab" class="tab">
@@ -184,7 +192,7 @@ dialog::backdrop{background:rgba(31,58,95,.4)}
 </section>
 
 <section id="journal" class="tab"><div class="card">
-  <div class="row"><div><label for="jFilter">Journal</label><select id="jFilter"><option value="">الكل</option><option value="AC">AC Achats</option><option value="VT">VT Ventes</option><option value="BQ">BQ Banque</option><option value="CA">CA Caisse</option><option value="OD">OD Opérations diverses</option></select></div></div>
+  <div class="row"><div><label for="jFilter">Journal</label><select id="jFilter"><option value="">الكل</option><option value="AC">AC Achats</option><option value="VT">VT Ventes</option><option value="BQ">BQ Banque</option><option value="CA">CA Caisse</option><option value="OD">OD Opérations diverses</option><option value="AN">AN À nouveaux</option></select></div></div>
   <div id="jOut"></div>
 </div></section>
 
@@ -240,6 +248,18 @@ dialog::backdrop{background:rgba(31,58,95,.4)}
     <button class="main full" id="pSave" type="button">حفظ</button>
   </div>
   <div class="card">
+    <h2>À nouveaux (الأرصدة ديال البداية)</h2>
+    <p class="muted">للشركات اللي عندها عوام قبل: عمّر الأرصدة من الـ Bilan ديال العام اللي فات (مجموع Débit = مجموع Crédit). إلا عمّرتي Capital (1111) هنا، خلي خانة Capital لفوق 0.</p>
+    <div class="row"><div><label for="anDate">تاريخ البداية</label><input type="date" id="anDate"></div></div>
+    <div class="row">
+      <div><label for="anC">Compte</label><input id="anC" list="accList" inputmode="numeric" placeholder="مثلا 1111"><datalist id="accList"></datalist></div>
+      <div><label for="anD">Débit</label><input type="number" id="anD" step="0.01"></div>
+      <div><label for="anCr">Crédit</label><input type="number" id="anCr" step="0.01"></div>
+      <button class="main" id="anAdd" type="button">زيد</button>
+    </div>
+    <div id="anOut"></div>
+  </div>
+  <div class="card">
     <h2>الحفظ والنقل</h2>
     <p class="muted">الداتا محفوظة غير فهاد المتصفح. Sauvegarde كتحمّل جميع الدوسيات فملف واحد، باش تحتافظ بنسخة ولا تنقلهم لجهاز آخر (Restaurer فالجهاز الآخر).</p>
     <div class="row">
@@ -264,6 +284,8 @@ dialog::backdrop{background:rgba(31,58,95,.4)}
 
 <dialog id="arDlg" style="max-width:680px"><div id="arBody"></div><div class="row" style="margin-top:12px"><button class="main" id="arRestore" type="button">♻️ رجّعها</button><button id="arClose" type="button">سد</button></div></dialog>
 
+<dialog id="docDlg" style="max-width:900px"><div id="docBody"></div><div class="row" style="margin-top:10px"><button id="docDl" type="button">⬇️ تحميل</button><button id="docClose" type="button">سد</button></div></dialog>
+
 <div id="print"></div>
 
 <script>
@@ -277,23 +299,33 @@ const ACC={'1111':'Capital social','1161':'Report à nouveau','1191':"Résultat 
 '6111':'Achats de marchandises','6121':'Achats de matières premières','6125':'Achats non stockés (fournitures, eau, électricité, carburant)','6126':'Achats de travaux, études et prestations',
 '6131':'Locations et charges locatives','6133':'Entretien et réparations','6134':"Primes d'assurances",'6136':"Honoraires",'6142':'Transports','6143':'Déplacements, missions et réceptions','6144':'Publicité','6145':'Frais postaux et télécommunications','6147':'Services bancaires',
 '6167':'Impôts et taxes','6171':'Rémunérations du personnel','6174':'Charges sociales','6193':"Dotations d'exploitation aux amortissements",
-'7111':'Ventes de marchandises au Maroc','7121':'Ventes de biens produits au Maroc','7124':'Ventes de services produits au Maroc','7381':'Intérêts et produits assimilés'};
-const LISTS={achat:['6111','6121','6125','6126','6131','6133','6134','6136','6142','6143','6144','6145','6147','6167','6171','6174'],immob:['2321','2332','2340','2351','2352','2355'],vente:['7111','7121','7124']};
-const BANKACC=['6125','6131','6133','6134','6136','6142','6143','6144','6145','6147','6167','6171','6174','4441','4456','1111','7124','7381'];
+'7111':'Ventes de marchandises au Maroc','7121':'Ventes de biens produits au Maroc','7124':'Ventes de services produits au Maroc','7381':'Intérêts et produits assimilés','7127':'Ventes et produits accessoires (loyers perçus)',
+'1140':'Réserve légale','1481':'Emprunts auprès des établissements de crédit','2311':'Terrains nus','3111':'Marchandises','4432':'Rémunérations dues au personnel','4443':'Organismes sociaux (AMO)','4452':'État, impôts et taxes (retenue à la source)'};
+const LISTS={loyer:['6131'],achat:['6111','6121','6125','6126','6131','6133','6134','6136','6142','6143','6144','6145','6147','6167','6171','6174'],immob:['2321','2332','2340','2351','2352','2355'],vente:['7111','7121','7124','7127']};
+const BANKACC=['6125','6131','6133','6134','6136','6142','6143','6144','6145','6147','6167','6171','6174','4441','4452','4456','1111','1481','7124','7127','7381'];
 const RATE={'2321':4,'2332':10,'2340':20,'2351':10,'2352':10,'2355':20};
 /* Catégorisation automatique des opérations bancaires */
 const RULES=[[/loyer|location/i,'6131'],[/maroc telecom|\biam\b|orange|inwi|internet|t[ée]l[ée]phone/i,'6145'],[/frais|commission|agios|tenue de compte|cotisation carte/i,'6147'],[/cnss|damancom/i,'4441'],[/salaire|paie/i,'6171'],[/\bdgi\b|tva|imp[oô]t|taxe/i,'4456'],[/lydec|redal|amendis|onee|radee|eau|[ée]lectricit/i,'6125'],[/assurance|saham|axa|rma|wafa ?ass/i,'6134'],[/carburant|afriquia|shell|petrom|gasoil|winxo/i,'6125'],[/publicit|facebook|google|meta ads/i,'6144'],[/honoraire|avocat|notaire|expert/i,'6136']];
-const JNAME={AC:'Achats',VT:'Ventes',BQ:'Banque',CA:'Caisse',OD:'Opérations diverses'};
+const JNAME={AN:'À nouveaux',AC:'Achats',VT:'Ventes',BQ:'Banque',CA:'Caisse',OD:'Opérations diverses'};
 
 /* ===== Outils ===== */
 const nowISO=()=>new Date().toISOString();
+const addMonths=(d,k)=>{const x=new Date(d);if(isNaN(x))return d;x.setMonth(x.getMonth()+k);return x.toISOString().slice(0,10)};
+const netPay=f=>r2(f.ttc-(f.ras||0));
+/* Justificatifs (photos/PDF) : IndexedDB, dans ce navigateur */
+const FDB=(()=>{let dbp=null;const open=()=>dbp||(dbp=new Promise((res,rej)=>{const r=indexedDB.open('compta-ma-files',1);r.onupgradeneeded=()=>r.result.createObjectStore('files');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}));
+  const tx=(mode,fn)=>open().then(db=>new Promise((res,rej)=>{const t=db.transaction('files',mode),q=fn(t.objectStore('files'));t.oncomplete=()=>res(q&&q.result);t.onerror=()=>rej(t.error)}));
+  return{put:(k,v)=>tx('readwrite',st=>st.put(v,k)),get:k=>tx('readonly',st=>st.get(k)),del:k=>tx('readwrite',st=>st.delete(k))}})();
+function compressImg(file){return new Promise(res=>{if(!file||!file.type.startsWith('image/')){res(file);return}const img=new Image();
+  img.onload=()=>{const sc=Math.min(1,1600/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);c.toBlob(b=>res(b||file),'image/jpeg',0.75)};
+  img.onerror=()=>res(file);img.src=URL.createObjectURL(file)})}
 const fmtDT=iso=>{const d=new Date(iso);return isNaN(d)?'':d.toLocaleDateString('fr-FR')+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})};
 const $=id=>document.getElementById(id);
 const r2=n=>Math.round((+n||0)*100)/100;
 const fmt=n=>(+n||0).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const tbl=(h,rows)=>`<div class="scroll"><table><thead><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
-const uid=()=>Date.now()*1000+Math.floor(Math.random()*1000);
+let _u=0;const uid=()=>Date.now()*1000+(_u++%1000);
 const today=()=>new Date().toISOString().slice(0,10);
 const addDays=(d,n)=>{const x=new Date(d);if(isNaN(x))return '';x.setDate(x.getDate()+(+n||0));return x.toISOString().slice(0,10)};
 const daysBetween=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
@@ -304,7 +336,7 @@ function num(s){s=String(s).replace(/\s/g,'').replace(/[^\d.,]/g,'');
   if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');else s=s.replace(/\.(?=.*\.)/g,'');return parseFloat(s)}
 
 /* ===== Données : plusieurs dossiers ===== */
-const blank=()=>({info:{nom:'',ice:'',if_:'',rc:'',adr:'',tel:'',year:new Date().getFullYear(),capital:0,regime:'encaissement',delai:60},tiers:[],inv:[],bank:[],seen:{},log:[]});
+const blank=()=>({info:{nom:'',ice:'',if_:'',rc:'',adr:'',tel:'',year:new Date().getFullYear(),capital:0,regime:'encaissement',delai:60},tiers:[],inv:[],bank:[],seen:{},log:[],an:[],anDate:''});
 const IDX='compta-ma-idx',dkey=id=>'compta-ma-d-'+id;
 let IDXD=null;
 try{IDXD=JSON.parse(localStorage.getItem(IDX))}catch(e){IDXD=null}
@@ -318,7 +350,7 @@ if(!IDXD||!IDXD.list||!IDXD.list.length){
   try{localStorage.setItem(dkey(id),JSON.stringify(first));localStorage.setItem(IDX,JSON.stringify(IDXD))}catch(e){}}
 if(!IDXD.list.some(x=>x.id===IDXD.current))IDXD.current=IDXD.list[0].id;
 function readDossier(id){let d=null;try{d=JSON.parse(localStorage.getItem(dkey(id)))}catch(e){}
-  d=Object.assign(blank(),d||{});d.info=Object.assign(blank().info,d.info||{});d.seen=d.seen||{};d.log=d.log||[];d.inv.forEach(f=>{f.tiers=f.tiers||''});return d}
+  d=Object.assign(blank(),d||{});d.info=Object.assign(blank().info,d.info||{});d.seen=d.seen||{};d.log=d.log||[];d.an=d.an||[];d.inv.forEach(f=>{f.tiers=f.tiers||''});return d}
 let S=readDossier(IDXD.current);
 const save=()=>{try{localStorage.setItem(dkey(IDXD.current),JSON.stringify(S));
   const e=IDXD.list.find(x=>x.id===IDXD.current);if(e){if(S.info.nom)e.nom=S.info.nom;e.upd=new Date().toISOString()}
@@ -373,9 +405,15 @@ function goTab(t){document.querySelector(`#nav button[data-t="${t}"]`).click()}
 /* ===== Saisie ===== */
 function fillAccounts(sel){const t=$('type').value;
   $('compte').innerHTML=accOpts(LISTS[t],sel);
-  $('amWrap').style.display=t==='immob'?'block':'none';
-  $('tiersLbl').textContent=t==='vente'?'الزبون (Client)':'المورد (Fournisseur)';
-  setRate();fillDatalist()}
+  $('amWrap').style.display=t==='immob'?'block':'none';$('loyWrap').style.display=t==='loyer'?'grid':'none';
+  $('tiersLbl').textContent=t==='vente'?'الزبون (Client)':t==='loyer'?'مول الملك (Bailleur)':'المورد (Fournisseur)';
+  setRate();fillDatalist();if(t==='loyer')setLoyer();else if($('tva').dataset.loy){delete $('tva').dataset.loy;$('tva').value='20';fromHT()}}
+function setLoyer(){$('tva').dataset.loy='1';$('tva').value=$('lLocal').value==='eq'?'20':'0';fromHT();rasAuto()}
+function rasAuto(){const ht=+$('ht').value||0,d=$('date').value||today();let r=0,n='';
+  if($('lBail').value==='pp'){const an=ht*12;if(an<30000){n='الكراء السنوي أقل من 30 000 DH: ما كايناش retenue.'}else if(an<120000){r=10;n='شخص عادي، الكراء السنوي بين 30 000 و 120 000 DH: retenue 10%.'}else{r=15;n='شخص عادي، الكراء السنوي فوق 120 000 DH: retenue 15%.'}}
+  else if(d>='2026-07-01'){r=5;n='شركة: retenue 5% من HT (جديد قانون المالية 2026، تأكد منها).'}else n='شركة: ما كايناش retenue قبل 1 يوليوز 2026.';
+  $('lRas').value=r;$('lNote').textContent=n+' تقدر تبدل النسبة بيدك.'}
+$('lBail').onchange=rasAuto;$('lLocal').onchange=setLoyer;
 function setRate(){$('taux').value=RATE[$('compte').value]||''}
 function fillDatalist(){const tt=tierType($('type').value);$('tiersList').innerHTML=S.tiers.filter(t=>t.type===tt).map(t=>`<option value="${esc(t.nom)}">`).join('')}
 function fromHT(){const ht=+$('ht').value||0,t=+$('tva').value;$('mtva').value=r2(ht*t/100).toFixed(2);$('ttc').value=r2(ht*(1+t/100)).toFixed(2)}
@@ -387,25 +425,32 @@ function suggestFromTier(){const name=$('tiers').value.trim(),tt=tierType($('typ
   if(last){$('compte').value=last.compte;$('tva').value=last.rate;setRate();fromHT();$('msg').innerHTML='<span class="muted">💡 خديت الحساب و TVA من آخر فاكتورة ديال هاد '+(tt==='client'?'الكليان':'المورد')+'.</span>'}}
 $('type').onchange=()=>fillAccounts();$('compte').onchange=setRate;
 $('ht').oninput=fromHT;$('tva').onchange=fromHT;$('ttc').oninput=fromTTC;
+$('ht').addEventListener('input',()=>{if($('type').value==='loyer')rasAuto()});$('date').addEventListener('change',()=>{if($('type').value==='loyer')rasAuto()});
 $('tiers').onchange=suggestFromTier;
 $('date').onchange=()=>{if(!$('ech').dataset.touched)$('ech').value=addDays($('date').value,S.info.delai)};
 $('ech').oninput=()=>{$('ech').dataset.touched='1'};
 
-$('save').onclick=()=>{const ht=+$('ht').value,date=$('date').value;
+$('save').onclick=async()=>{const ht=+$('ht').value,date=$('date').value;
   if(!date||!ht){$('msg').innerHTML='<div class="alert a-ko">عمّر التاريخ و Montant HT قبل ما تسجل.</div>';return}
   const t=+$('tva').value,type=$('type').value,tiers=$('tiers').value.trim(),num=$('num').value.trim();
   if(num&&S.inv.some(x=>x.num===num&&x.type===type&&x.tiers.toLowerCase()===tiers.toLowerCase())
      &&!confirm('هاد الفاكتورة مسجلة من قبل (نفس الرقم ونفس '+(type==='vente'?'الكليان':'المورد')+'). واش تزيدها مرة أخرى؟'))return;
-  const pay=$('pay').value,[pm,pt]=pay?pay.split(':'):['',''];
-  const f={id:uid(),type,date,num,tiers,ice:$('ice').value.trim(),des:$('des').value.trim(),compte:$('compte').value,
-    taux:type==='immob'?(+$('taux').value||0):0,ht:r2(ht),rate:t,tva:r2(ht*t/100),ttc:r2(ht*(1+t/100)),
-    ech:$('ech').value||addDays(date,S.info.delai),payMode:pm,payType:pt,payDate:pay?date:''};
-  S.inv.push(f);ensureTier(tiers,f.ice,tierType(type));logA('➕ فاكتورة جديدة',invRef(f));
+  const pay=$('pay').value,[pm,pt]=pay?pay.split(':'):['',''],isL=type==='loyer',n=isL?Math.max(1,Math.min(24,+$('lMonths').value||1)):1;
+  const rasRate=isL?(+$('lRas').value||0):0,photo=$('photo').files[0];let first=null;
+  for(let k=0;k<n;k++){const d=k?addMonths(date,k):date,paid=!!pay&&(k===0||d<=today());
+    const f={id:uid(),type,date:d,num:n>1?(num||'LOY')+'-'+d.slice(0,7):num,tiers,ice:$('ice').value.trim(),des:$('des').value.trim()||(isL?'Loyer '+d.slice(0,7):''),compte:$('compte').value,
+      taux:type==='immob'?(+$('taux').value||0):0,ht:r2(ht),rate:t,tva:r2(ht*t/100),ttc:r2(ht*(1+t/100)),
+      ech:isL?d:($('ech').value||addDays(date,S.info.delai)),payMode:paid?pm:'',payType:paid?pt:'',payDate:paid?d:''};
+    if(isL){f.bail=$('lBail').value;f.rasRate=rasRate;f.ras=r2(ht*rasRate/100)}
+    S.inv.push(f);if(!first)first=f;logA('➕ فاكتورة جديدة',invRef(f))}
+  ensureTier(tiers,first.ice,tierType(type));
+  if(photo){try{await FDB.put(String(first.id),await compressImg(photo));first.hasDoc=true}catch(e){}}
   const fy=+date.slice(0,4);let note='';
   if(fy!==+S.info.year){S.info.year=fy;note=' | Exercice تبدل لـ '+fy}
-  save();['num','tiers','ice','des','ht','mtva','ttc'].forEach(i=>$(i).value='');
+  save();['num','tiers','ice','des','ht','mtva','ttc'].forEach(i=>$(i).value='');$('photo').value='';$('preview').style.display='none';
   delete $('ech').dataset.touched;$('ech').value=addDays($('date').value,S.info.delai);
-  $('msg').innerHTML='<div class="alert a-ok">✓ تسجلات الفاكتورة'+note+'</div>';render()};
+  $('msg').innerHTML='<div class="alert a-ok">✓ '+(n>1?'تسجلو '+n+' فواتير ديال الكراء':'تسجلات الفاكتورة')+(first.hasDoc?' مع الصورة 📎':'')+note+'</div>';render()};
+
 
 /* ===== OCR ===== */
 $('photo').onchange=()=>{const f=$('photo').files[0];if(!f)return;$('preview').src=URL.createObjectURL(f);$('preview').style.display='block'};
@@ -439,9 +484,12 @@ function plan(f){const rows=[];if(!f.taux)return rows;
 function entries(){const E=[];
   const add=(j,date,lib,lines)=>{lines=lines.filter(l=>Math.abs(l[1])>0.004||Math.abs(l[2])>0.004);if(lines.length)E.push({j,date,lib,lines})};
   if(S.info.capital>0)add('OD','0000-01-01','Apport en capital',[['5141',S.info.capital,0],['1111',0,S.info.capital]]);
+  if((S.an||[]).length)add('AN',S.anDate||(S.info.year+'-01-01'),'À nouveaux',S.an.map(x=>[x.a,x.d,x.c]));
   S.inv.forEach(f=>{const L=('Fact. '+(f.num||'')+' '+(f.tiers||'')).trim(),pj=f.payMode==='5161'?'CA':'BQ',pd=f.payDate||f.date;
     if(f.type==='achat'){add('AC',f.date,L,[[f.compte,f.ht,0],['34552',f.tva,0],['4411',0,f.ttc]]);
       if(f.payMode)add(pj,pd,'Règlement '+L,[['4411',f.ttc,0],[f.payMode,0,f.ttc]])}
+    if(f.type==='loyer'){const r=f.ras||0,net=netPay(f);add('AC',f.date,L,[[f.compte,f.ht,0],['34552',f.tva,0],['4411',0,net],['4452',0,r]]);
+      if(f.payMode)add(pj,pd,'Règlement '+L,[['4411',net,0],[f.payMode,0,net]])}
     if(f.type==='immob'){add('AC',f.date,L,[[f.compte,f.ht,0],['34551',f.tva,0],['4481',0,f.ttc]]);
       if(f.payMode)add(pj,pd,'Règlement '+L,[['4481',f.ttc,0],[f.payMode,0,f.ttc]]);
       plan(f).forEach(p=>add('OD',p.y+'-12-31','Dotation '+(f.des||accName(f.compte)),[['6193',p.dot,0],['283'+f.compte[2],0,p.dot]]))}
@@ -461,25 +509,25 @@ const dueDate=f=>f.ech||addDays(f.date,S.info.delai);
 /* ===== TVA (avec report du crédit) ===== */
 function tvaMonths(Y){const M=Array.from({length:12},()=>({f:0,c:0,i:0}));
   S.inv.forEach(f=>{const d=S.info.regime==='encaissement'?f.payDate:f.date;if(!d||!d.startsWith(Y))return;
-    const m=M[+d.slice(5,7)-1];if(f.type==='vente')m.f+=f.tva;else if(f.type==='achat')m.c+=f.tva;else m.i+=f.tva});
+    const m=M[+d.slice(5,7)-1];if(f.type==='vente')m.f+=f.tva;else if(f.type!=='immob')m.c+=f.tva;else m.i+=f.tva});
   let credit=0;return M.map(m=>{const prev=credit,due=r2(m.f-m.c-m.i-prev);let pay=0;if(due>=0){pay=due;credit=0}else credit=-due;return{...m,prev,pay,credit}})}
 
 /* ===== Tableau de bord ===== */
 function renderDash(){const Y=String(S.info.year),now=today();
   const inY=S.inv.filter(f=>f.date.startsWith(Y));
   const ca=r2(inY.filter(f=>f.type==='vente').reduce((s,f)=>s+f.ht,0));
-  const ach=r2(inY.filter(f=>f.type==='achat').reduce((s,f)=>s+f.ht,0));
+  const ach=r2(inY.filter(f=>f.type==='achat'||f.type==='loyer').reduce((s,f)=>s+f.ht,0));
   const {res}=cpcOf(Y);
   const bq=soldeAcct('5141','9999'),cs=soldeAcct('5161','9999');
   const cre=r2(S.inv.filter(f=>f.type==='vente'&&!isPaid(f)).reduce((s,f)=>s+f.ttc,0));
-  const det=r2(S.inv.filter(f=>f.type!=='vente'&&!isPaid(f)).reduce((s,f)=>s+f.ttc,0));
+  const det=r2(S.inv.filter(f=>f.type!=='vente'&&!isPaid(f)).reduce((s,f)=>s+netPay(f),0));
   const tv=tvaMonths(Y),mi=new Date().getMonth(),curTva=Y===now.slice(0,4)?tv[mi]:tv[11];
   const k=(l,v,cls='')=>`<div class="kpi"><div class="l">${l}</div><div class="v ${cls}">${fmt(v)} DH</div></div>`;
   $('kpis').innerHTML=k('رقم المعاملات HT',ca)+k('المشتريات HT',ach)+k('النتيجة '+(res>=0?'(ربح)':'(خسارة)'),res,res>=0?'pos':'neg')+
     k('البنكة',bq,bq<0?'neg':'')+k('الكاش',cs,cs<0?'neg':'')+k('عند الكليان (Créances)',cre)+k('للموردين (Dettes)',det)+
     k('TVA '+(curTva.pay>0?'خاصها تتخلص':'Crédit'),curTva.pay>0?curTva.pay:curTva.credit,curTva.pay>0?'neg':'pos');
   /* graphique */
-  const V=Array(12).fill(0),A=Array(12).fill(0);inY.forEach(f=>{const m=+f.date.slice(5,7)-1;if(f.type==='vente')V[m]+=f.ht;else if(f.type==='achat')A[m]+=f.ht});
+  const V=Array(12).fill(0),A=Array(12).fill(0);inY.forEach(f=>{const m=+f.date.slice(5,7)-1;if(f.type==='vente')V[m]+=f.ht;else if(f.type!=='immob')A[m]+=f.ht});
   const mx=Math.max(1,...V,...A),W=640,H=200,bw=18,gap=W/12;
   let bars='';for(let i=0;i<12;i++){const x=i*gap+8,hv=V[i]/mx*(H-30),ha=A[i]/mx*(H-30);
     bars+=`<rect x="${x}" y="${H-20-hv}" width="${bw}" height="${hv}" fill="#2F7D4F"><title>Ventes ${fmt(V[i])}</title></rect><rect x="${x+bw+2}" y="${H-20-ha}" width="${bw}" height="${ha}" fill="#B23A3A"><title>Achats ${fmt(A[i])}</title></rect><text x="${x+bw}" y="${H-5}" text-anchor="middle">${i+1}</text>`}
@@ -498,6 +546,9 @@ function renderDash(){const Y=String(S.info.year),now=today();
   if(noIce.length)push('noIce','a-w',`🆔 ${noIce.length} فاكتورة ديال الشراء بلا ICE. الفاكتورة بلا ICE ممكن ما تقبلش فخصم TVA.`,noIce.map(f=>f.id).join());
   if(curTva.pay>0)push('tva','a-w',`🧮 TVA ديال هاد الشهر: ${fmt(curTva.pay)} DH خاصها تتصرح فـ SIMPL-TVA.`,curTva.pay);
   if(!S.info.nom||!S.info.ice)push('info','a-w',`⚙️ كمّل المعلومات ديال الشركة (الاسم و ICE) فالإعدادات باش يبانو فالفواتير. <button class="sm" onclick="goTab('params')">الإعدادات</button>`);
+  const pmn=(()=>{const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-1);return d.toISOString().slice(0,7)})();
+  const rasM=r2(S.inv.filter(f=>f.ras>0&&f.payDate&&f.payDate.startsWith(pmn)).reduce((s,f)=>s+f.ras,0));
+  if(rasM>0)push('ras','a-w',`🏠 Retenue à la source ديال الكراء ديال ${pmn}: ${fmt(rasM)} DH خاصها تتصرح وتتخلص لـ DGI قبل آخر هاد الشهر.`,rasM);
   const ctlKo=controls().filter(r=>r.lvl==='ko').length;
   if(ctlKo)push('ctl','a-ko',`❌ ${ctlKo} غلط فالفواتير ديال هاد العام (مكررة، ICE غلط…). <button class="sm" onclick="goTab('controles')">Contrôles</button>`,ctlKo);
   Object.keys(S.seen).forEach(k=>{if(!live[k])delete S.seen[k]});save();
@@ -509,12 +560,12 @@ function renderList(){const flt=$('fFilter').value,q=$('fSearch').value.trim().t
   let L=S.inv.slice().sort((a,b)=>b.date.localeCompare(a.date));
   if(flt==='unpaid')L=L.filter(f=>!isPaid(f));else if(flt!=='all')L=L.filter(f=>f.type===flt);
   if(q)L=L.filter(f=>(f.num+' '+f.tiers+' '+f.des+' '+f.ice).toLowerCase().includes(q));
-  const T={achat:'Achat',immob:'Immob.',vente:'Vente'};
+  const T={achat:'Achat',loyer:'Loyer',immob:'Immob.',vente:'Vente'};
   const rows=L.map(f=>{let st;
     if(isPaid(f))st=`<span class="badge b-ok">تخلصات ${f.payDate}</span>`;
     else if(dueDate(f)<now)st=`<span class="badge b-ko">متأخرة ${daysBetween(dueDate(f),now)} يوم</span>`;
     else st=`<span class="badge b-w">قبل ${dueDate(f)}</span>`;
-    return `<tr><td>${f.date}</td><td>${T[f.type]}</td><td>${esc(f.num)}</td><td>${esc(f.tiers)}</td><td class="n">${fmt(f.ht)}</td><td class="n">${fmt(f.tva)}</td><td class="n">${fmt(f.ttc)}</td><td>${st}</td><td>${isPaid(f)?`<button class="sm" onclick="unpay(${f.id})">إلغاء الخلاص</button>`:`<button class="sm main" onclick="openPay(${f.id})">خلّص</button>`} ${f.type==='vente'?`<button class="sm" onclick="printInv(${f.id})">🖨</button>`:''} <button class="sm ko" onclick="delInv(${f.id})">✕</button></td></tr>`});
+    return `<tr><td>${f.date}</td><td>${T[f.type]}</td><td>${esc(f.num)}</td><td>${esc(f.tiers)}</td><td class="n">${fmt(f.ht)}</td><td class="n">${fmt(f.tva)}</td><td class="n">${fmt(f.ttc)}</td><td>${st}</td><td>${isPaid(f)?`<button class="sm" onclick="unpay(${f.id})">إلغاء الخلاص</button>`:`<button class="sm main" onclick="openPay(${f.id})">خلّص</button>`} ${f.type==='vente'?`<button class="sm" onclick="printInv(${f.id})">🖨</button>`:''} ${f.hasDoc?`<button class="sm" onclick="showDoc(${f.id})" title="شوف الصورة">📎</button>`:`<button class="sm" onclick="attachDoc(${f.id})" title="زيد الصورة">📎+</button>`} <button class="sm ko" onclick="delInv(${f.id})">✕</button></td></tr>`});
   $('listOut').innerHTML=L.length?tbl(['Date','Type','N°','Tiers','HT','TVA','TTC','الحالة',''],rows):'<p class="muted">ما كاين حتى فاكتورة هنا. سجّل فاكتورة من Saisie.</p>'}
 $('fFilter').onchange=renderList;$('fSearch').oninput=renderList;
 let payId=null;
@@ -523,6 +574,15 @@ $('pdNo').onclick=()=>$('payDlg').close();
 $('pdOk').onclick=()=>{const f=S.inv.find(x=>x.id===payId);if(f&&$('pdDate').value){f.payDate=$('pdDate').value;[f.payMode,f.payType]=$('pdMode').value.split(':');logA('💰 خلاص',invRef(f)+' | '+PAYT[f.payType]+' | '+f.payDate);save();render()}$('payDlg').close()};
 function unpay(id){const f=S.inv.find(x=>x.id===id);if(!f||!confirm('تلغي الخلاص ديال هاد الفاكتورة؟'))return;f.payMode='';f.payType='';f.payDate='';S.bank.forEach(b=>{if(b.match===id)b.match=null});logA('↩️ إلغاء الخلاص',invRef(f));save();render()}
 function delInv(id){const f=S.inv.find(x=>x.id===id);if(!f||!confirm('تمسح هاد الفاكتورة؟ غادي تمشي لـ 🗄 Archive وتقدر ترجعها.'))return;toTrash('inv',f);logA('🗑 مسح فاكتورة',invRef(f));S.inv=S.inv.filter(f=>f.id!==id);S.bank.forEach(b=>{if(b.match===id)b.match=null});save();render()}
+let attId=null;function attachDoc(id){attId=id;$('attIn').value='';$('attIn').click()}
+$('attIn').onchange=async()=>{const file=$('attIn').files[0],f=S.inv.find(x=>x.id===attId);if(!file||!f)return;
+  try{await FDB.put(String(f.id),await compressImg(file));f.hasDoc=true;logA('📎 Justificatif',invRef(f));save();render()}catch(e){alert('ما قدرش يحفظ الصورة فهاد المتصفح.')}};
+async function showDoc(id){let b=null;try{b=await FDB.get(String(id))}catch(e){}
+  if(!b){alert('ما لقيتش الصورة فهاد الجهاز. الصور كيتحفظو غير فالمتصفح اللي زدتيهم منو.');return}
+  const u=URL.createObjectURL(b),pdf=b.type==='application/pdf';
+  $('docBody').innerHTML=pdf?`<iframe src="${u}" style="width:100%;height:70vh;border:0" title="PDF"></iframe>`:`<img src="${u}" alt="الفاكتورة" style="max-width:100%;border-radius:6px">`;
+  $('docDl').onclick=()=>{const a=document.createElement('a');a.href=u;a.download='facture-'+id+(pdf?'.pdf':'.jpg');a.click()};$('docDlg').showModal()}
+$('docClose').onclick=()=>$('docDlg').close();
 function printInv(id){const f=S.inv.find(x=>x.id===id),I=S.info;
   $('print').innerHTML=`<div dir="ltr" style="font-family:Arial,sans-serif;color:#000;padding:24px;max-width:760px;margin:auto">
   <table style="width:100%"><tr><td style="vertical-align:top"><h2 style="margin:0">${esc(I.nom||'Ma société')}</h2><div>${esc(I.adr)}</div><div>Tél : ${esc(I.tel)}</div></td>
@@ -555,7 +615,7 @@ function parseDate(s){s=String(s||'').trim();let m=s.match(/^(\d{4})-(\d{2})-(\d
 function categorize(b){for(const[re,c]of RULES)if(re.test(b.lib))return c;return null}
 function autoMatch(){let n=0;
   S.bank.filter(b=>!b.match&&!b.compte).forEach(b=>{const isIn=b.amount>0;
-    const c=S.inv.filter(f=>!isPaid(f)&&(isIn?f.type==='vente':f.type!=='vente')&&Math.abs(f.ttc-Math.abs(b.amount))<0.01)
+    const c=S.inv.filter(f=>!isPaid(f)&&(isIn?f.type==='vente':f.type!=='vente')&&Math.abs(netPay(f)-Math.abs(b.amount))<0.01)
       .sort((x,y)=>Math.abs(new Date(x.date)-new Date(b.date))-Math.abs(new Date(y.date)-new Date(b.date)))[0];
     if(c){c.payMode=b.acct;c.payType=b.acct==='5161'?'1':'4';c.payDate=b.date;b.match=c.id;n++}});return n}
 function autoCat(){let n=0;S.bank.filter(b=>!b.match&&!b.compte).forEach(b=>{const c=categorize(b);if(c){b.compte=c;n++}});return n}
@@ -593,7 +653,7 @@ function controls(){const Y=String(S.info.year),now=today(),R=[],add=(lvl,msg,f)
   const tt=L.map(f=>f.ttc).sort((a,b)=>a-b),med=tt.length?tt[Math.floor(tt.length/2)]:0;
   L.forEach(f=>{
     if(f.ice&&!/^\d{15}$/.test(f.ice))add('ko','ICE غلط: خاصو يكون 15 رقم بالضبط (دابا فيه '+f.ice.replace(/\D/g,'').length+')',f);
-    if(!f.ice&&f.type!=='vente')add('w','بلا ICE ديال المورد، ممكن TVA ما تتخصمش',f);
+    if(!f.ice&&f.type!=='vente'&&!(f.type==='loyer'&&f.bail==='pp'))add('w','بلا ICE ديال المورد، ممكن TVA ما تتخصمش',f);
     if(!f.ice&&f.type==='vente')add('w','فاتورة البيع بلا ICE ديال الكليان (ضروري إلا كان الكليان شركة)',f);
     if(![0,7,10,14,20].includes(+f.rate))add('ko','Taux TVA ماشي من النسب المغربية ('+f.rate+'%)',f);
     if(Math.abs(f.ht+f.tva-f.ttc)>0.01)add('ko','HT + TVA ما كيساويش TTC',f);
@@ -604,6 +664,9 @@ function controls(){const Y=String(S.info.year),now=today(),R=[],add=(lvl,msg,f)
     if(!f.tiers)add('w','بلا اسم '+(f.type==='vente'?'الكليان':'المورد'),f);
     if(f.type!=='vente'&&f.payMode==='5161'&&f.ttc>5000)add('w','تخلصات كاش وفاتت 5 000 DH: ممكن المصروف و TVA ما يتقبلوش فالخصم الضريبي. الأحسن بالشيك ولا التحويل',f);
     if(f.type==='immob'&&!f.taux)add('w','Immobilisation بلا نسبة Amortissement',f)});
+  const nd=L.filter(f=>f.type!=='vente'&&!f.hasDoc).length;
+  if(nd)add('w',nd+' فاكتورة ديال الشراء بلا صورة (justificatif). زيدها من 🧾 Factures بزر 📎+',null);
+  if((S.an||[]).length){const ad=S.an.reduce((s,x)=>s+x.d-x.c,0);if(Math.abs(ad)>0.01)add('ko','À nouveaux ماشي متوازنين (الفرق '+fmt(ad)+')',null)}
   const nj=S.bank.filter(b=>!b.match&&!b.compte&&b.date.startsWith(Y)).length;
   if(nj)add('w',nj+' عملية بنكية à justifier (بلا فاكتورة ولا حساب)',null);
   let td=0,tc=0;entries().filter(e=>e.date.startsWith(Y)).forEach(e=>e.lines.forEach(([,d,c])=>{td+=d;tc+=c}));
@@ -673,7 +736,7 @@ function renderReleve(){const P=relevePeriod(),L=releveRows();
       return `<tr${!t.if_||!f.ice?' style="background:#FFF7E6"':''}><td class="n">${i+1}</td><td>${esc(f.num)}</td><td>${esc(t.if_||'—')}</td><td>${esc(f.tiers)}</td><td>${esc(f.ice||'—')}</td><td>${esc(f.des||accName(f.compte))}</td><td class="n">${fmt(f.ht)}</td><td class="n">${f.rate}%</td><td class="n">${fmt(f.tva)}</td><td class="n">${fmt(f.ttc)}</td><td>${pt} - ${PAYT[pt]}</td><td>${f.payDate}</td></tr>`});
     rows.push(`<tr class="tot"><td colspan="6">Total</td><td class="n">${fmt(T.ht)}</td><td></td><td class="n">${fmt(T.tva)}</td><td class="n">${fmt(T.ttc)}</td><td colspan="2"></td></tr>`);
     return `<h3>${title}</h3>`+tbl(RVH,rows)};
-  const C=L.filter(f=>f.type==='achat'),I=L.filter(f=>f.type==='immob');
+  const C=L.filter(f=>f.type==='achat'||f.type==='loyer'),I=L.filter(f=>f.type==='immob');
   if(!L.length)h+='<div class="alert a-w"><div>ما كاين حتى فاكتورة ديال الشراء فيها TVA وتخلصات فهاد الفترة. سجّل الخلاص من 🧾 Factures (زر خلّص).</div></div>';
   h+=sect('A. Charges (TVA récupérable sur charges)',C)+sect('B. Immobilisations',I);
   if(L.length){const tC=C.reduce((s,f)=>s+f.tva,0),tI=I.reduce((s,f)=>s+f.tva,0);
@@ -685,7 +748,7 @@ function renderReleve(){const P=relevePeriod(),L=releveRows();
   $('rvOut').innerHTML=h}
 $('rvType').onchange=renderReleve;$('rvMonth').onchange=renderReleve;
 $('rvCsv').onclick=()=>{const P=relevePeriod(),L=releveRows(),out=[['Section',...RVH]];
-  [['Charges',L.filter(f=>f.type==='achat')],['Immobilisations',L.filter(f=>f.type==='immob')]].forEach(([sec,list])=>list.forEach((f,i)=>{const t=tierOf(f),pt=payTypeOf(f);
+  [['Charges',L.filter(f=>f.type==='achat'||f.type==='loyer')],['Immobilisations',L.filter(f=>f.type==='immob')]].forEach(([sec,list])=>list.forEach((f,i)=>{const t=tierOf(f),pt=payTypeOf(f);
     out.push([sec,i+1,f.num,t.if_||'',f.tiers,f.ice,f.des||accName(f.compte),String(f.ht).replace('.',','),f.rate,String(f.tva).replace('.',','),String(f.ttc).replace('.',','),pt+' - '+PAYT[pt],f.payDate])}));
   download('releve-deductions-'+P.label.replace(/\W+/g,'-')+'.csv','\uFEFF'+out.map(l=>l.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\n'),'text/csv')};
 $('rvPrint').onclick=()=>{const I=S.info;
@@ -701,10 +764,12 @@ function renderBilan(){const Y=+S.info.year,end=Y+'-12-31',B={},res={cur:0,prev:
   const rowP=(c,lbl,v)=>{tP+=v;P.push(`<tr><td>${c} ${lbl}</td><td class="n">${fmt(v)}</td></tr>`)};
   const K=Object.keys(B).sort(),nz=c=>Math.abs(B[c])>0.004;
   K.filter(c=>c[0]==='2'&&!c.startsWith('28')).forEach(c=>rowA(c,B[c],am[c]||0));
+  const amA={};S.inv.filter(f=>f.type==='immob').forEach(f=>plan(f).filter(p=>p.y<=Y).forEach(p=>{const a='283'+f.compte[2];amA[a]=(amA[a]||0)+p.dot}));
+  K.filter(c=>c.startsWith('28')).forEach(c=>{const ex=r2(-B[c]-(amA[c]||0));if(Math.abs(ex)>0.004)rowA(c,0,ex)});
   K.filter(c=>c[0]==='3'&&nz(c)).forEach(c=>rowA(c,B[c],0));
   K.filter(c=>c[0]==='5'&&B[c]>0.004).forEach(c=>rowA(c,B[c],0));
-  K.filter(c=>c[0]==='1').forEach(c=>rowP(c,accName(c),-B[c]));
-  rowP('1161',accName('1161'),r2(res.prev));rowP('1191',accName('1191'),r2(res.cur));
+  K.filter(c=>c[0]==='1'&&c!=='1161'&&c!=='1191').forEach(c=>rowP(c,accName(c),-B[c]));
+  rowP('1161',accName('1161'),r2(res.prev-(B['1161']||0)-(B['1191']||0)));rowP('1191',accName('1191'),r2(res.cur));
   K.filter(c=>c[0]==='4'&&nz(c)).forEach(c=>rowP(c,accName(c),-B[c]));
   K.filter(c=>c[0]==='5'&&B[c]<-0.004).forEach(c=>rowP(c,'Crédits de trésorerie ('+accName(c)+')',-B[c]));
   const ok=Math.abs(tA-tP)<0.01;
@@ -716,7 +781,11 @@ function renderBilan(){const Y=+S.info.year,end=Y+'-12-31',B={},res={cur:0,prev:
   const C=Object.keys(cpc).sort().map(c=>`<tr><td>${c} ${accName(c)}</td><td class="n">${c[0]==='6'?fmt(cpc[c]):''}</td><td class="n">${c[0]==='7'?fmt(cpc[c]):''}</td></tr>`);
   C.push(`<tr class="tot"><td>Total</td><td class="n">${fmt(ch)}</td><td class="n">${fmt(pr)}</td></tr>`,
     `<tr class="tot"><td>Résultat net ${pr-ch>=0?'(Bénéfice)':'(Perte)'}</td><td class="n" colspan="2">${fmt(pr-ch)}</td></tr>`);
-  $('cpcOut').innerHTML=`<h2>CPC ${Y}</h2>`+tbl(['Compte','Charges','Produits'],C)+'<p class="muted">IS ما محسوبش هنا.</p>'}
+  $('cpcOut').innerHTML=`<h2>CPC ${Y}</h2>`+tbl(['Compte','Charges','Produits'],C)+isBlock(cpc,pr-ch)}
+function isBlock(cpc,resN){const ca=Object.keys(cpc).filter(c=>c.startsWith('71')).reduce((s,c)=>s+cpc[c],0),rate=resN>=1e8?35:20,
+  isN=resN>0?r2(resN*rate/100):0,cm=Math.max(r2(ca*0.0025),3000),isD=Math.max(isN,cm);
+  return '<h3>IS تقديري</h3>'+tbl(['',''],[`<tr><td>IS على النتيجة (${rate}%)</td><td class="n">${fmt(isN)}</td></tr>`,`<tr><td>Cotisation minimale (0,25% من CA، أقل حاجة 3 000)</td><td class="n">${fmt(cm)}</td></tr>`,`<tr class="tot"><td>IS اللي غادي تخلص (الكبير فيهم)</td><td class="n">${fmt(isD)}</td></tr>`])+
+  '<p class="muted">حساب تقريبي على النتيجة المحاسبية. الربح الضريبي كيختالف (réintégrations و déductions)، والنسب ديال 2026 تأكد منهم مع DGI. الشركات الجديدة معفية من Cotisation minimale ف 36 شهر الأولى. و IS كيتخلص على 4 acomptes فالعام.</p>'}
 
 /* ===== Archive (affichage) ===== */
 const KIND={inv:'🧾 Facture',bank:'🏦 Banque',tier:'👥 Tiers',dossier:'🗂 Dossier'};
@@ -734,8 +803,9 @@ function renderArchive(){const k=$('arKind').value,q=$('arQ').value.trim().toLow
 $('arKind').onchange=renderArchive;$('arQ').oninput=renderArchive;$('lgQ').oninput=renderArchive;
 let viewTid=null;
 function viewT(tid){const t=TRASH.find(x=>x.tid===tid);if(!t)return;viewTid=tid;const d=t.data,kv=a=>tbl(['',''],a.map(([k,v])=>`<tr><td><b>${k}</b></td><td>${esc(v)}</td></tr>`));let h=`<h2>${KIND[t.kind]}</h2><p class="muted">تمسحات ${fmtDT(t.at)} | الدوسي: ${esc(t.dNom)}</p>`;
-  if(t.kind==='inv')h+=kv([['Type',{achat:'Achat',immob:'Immobilisation',vente:'Vente'}[d.type]],['Date',d.date],['N°',d.num],['Tiers',d.tiers],['ICE',d.ice],['Désignation',d.des],['Compte',d.compte+' '+accName(d.compte)],['HT',fmt(d.ht)],['TVA',d.rate+'% = '+fmt(d.tva)],['TTC',fmt(d.ttc)],['Échéance',d.ech],['Paiement',d.payMode?(d.payDate+' | '+PAYT[payTypeOf(d)]):'ما تخلصاتش']]);
-  else if(t.kind==='bank')h+=kv([['Date',d.date],['Libellé',d.lib],['Montant',fmt(d.amount)+' DH'],['Compte',d.compte?d.compte+' '+accName(d.compte):(d.match?'مربوطة بفاكتورة':'à justifier')]]);
+  if(t.kind==='inv')h+=kv([['Type',{achat:'Achat',loyer:'Loyer',immob:'Immobilisation',vente:'Vente'}[d.type]],['Date',d.date],['N°',d.num],['Tiers',d.tiers],['ICE',d.ice],['Désignation',d.des],['Compte',d.compte+' '+accName(d.compte)],['HT',fmt(d.ht)],['TVA',d.rate+'% = '+fmt(d.tva)],['TTC',fmt(d.ttc)],['Échéance',d.ech],['Paiement',d.payMode?(d.payDate+' | '+PAYT[payTypeOf(d)]):'ما تخلصاتش']]);
+  if(t.kind==='inv'&&d.hasDoc)h+=`<p><button class="sm" onclick="showDoc(${d.id})">📎 شوف الصورة</button></p>`;
+  if(t.kind==='bank')h+=kv([['Date',d.date],['Libellé',d.lib],['Montant',fmt(d.amount)+' DH'],['Compte',d.compte?d.compte+' '+accName(d.compte):(d.match?'مربوطة بفاكتورة':'à justifier')]]);
   else if(t.kind==='tier')h+=kv([['الاسم',d.nom],['النوع',d.type],['ICE',d.ice],['IF',d.if_],['التيليفون',d.tel],['Email',d.email]]);
   else{const I=d.info||{};h+=kv([['الشركة',I.nom],['ICE',I.ice],['IF',I.if_],['فواتير',(d.inv||[]).length],['Tiers',(d.tiers||[]).length],['عمليات بنكية',(d.bank||[]).length]]);
     h+='<h3>الفواتير</h3>'+tbl(['Date','N°','Tiers','TTC'],(d.inv||[]).slice().sort((a,b)=>b.date.localeCompare(a.date)).map(f=>`<tr><td>${f.date}</td><td>${esc(f.num)}</td><td>${esc(f.tiers)}</td><td class="n">${fmt(f.ttc)}</td></tr>`))}
@@ -753,8 +823,22 @@ function restoreT(tid){const t=TRASH.find(x=>x.tid===tid);if(!t)return;
     D.log=D.log||[];D.log.unshift({at:nowISO(),action:'♻️ رجّعت '+KIND[t.kind],detail:trashLabel(t)});
     if(target===IDXD.current)save();else try{localStorage.setItem(dkey(target),JSON.stringify(D))}catch(e){}}
   TRASH=TRASH.filter(x=>x.tid!==tid);saveTrash();render();alert('✓ ترجعات')}
-function purgeT(tid){if(!confirm('غادي تمسحها نهائيا وما تقدرش ترجعها. متأكد؟'))return;TRASH=TRASH.filter(x=>x.tid!==tid);saveTrash();renderArchive()}
-$('arEmpty').onclick=()=>{if(!TRASH.length)return;if(!confirm('غادي تمسح جميع المحذوفات نهائيا ('+TRASH.length+'). متأكد؟'))return;TRASH=[];saveTrash();renderArchive()};
+function purgeT(tid){if(!confirm('غادي تمسحها نهائيا وما تقدرش ترجعها. متأكد؟'))return;const t=TRASH.find(x=>x.tid===tid);if(t&&t.kind==='inv'&&t.data.hasDoc)FDB.del(String(t.data.id)).catch(()=>{});TRASH=TRASH.filter(x=>x.tid!==tid);saveTrash();renderArchive()}
+$('arEmpty').onclick=()=>{if(!TRASH.length)return;if(!confirm('غادي تمسح جميع المحذوفات نهائيا ('+TRASH.length+'). متأكد؟'))return;TRASH.forEach(t=>{if(t.kind==='inv'&&t.data.hasDoc)FDB.del(String(t.data.id)).catch(()=>{})});TRASH=[];saveTrash();renderArchive()};
+
+/* ===== À nouveaux ===== */
+$('accList').innerHTML=Object.keys(ACC).sort().map(c=>`<option value="${c}">${c} - ${ACC[c]}</option>`).join('');
+function renderAN(){const L=S.an||[];let d=0,c=0;
+  const rows=L.map((x,i)=>{d+=x.d;c+=x.c;return `<tr><td class="acc">${esc(x.a)}</td><td>${accName(x.a)}</td><td class="n">${x.d?fmt(x.d):''}</td><td class="n">${x.c?fmt(x.c):''}</td><td><button class="sm ko" onclick="delAN(${i})">✕</button></td></tr>`});
+  if(L.length)rows.push(`<tr class="tot"><td colspan="2">Total</td><td class="n">${fmt(d)}</td><td class="n">${fmt(c)}</td><td></td></tr>`);
+  $('anDate').value=S.anDate||(S.info.year+'-01-01');
+  $('anOut').innerHTML=L.length?tbl(['Compte','Intitulé','Débit','Crédit',''],rows)+(Math.abs(d-c)>0.01?`<div class="alert a-ko"><div>❌ Débit ماشي بحال Crédit (الفرق ${fmt(d-c)}). الـ Bilan ما غاديش يكون équilibré.</div></div>`:'<div class="alert a-ok"><div>✓ À nouveaux متوازنين.</div></div>'):'<p class="muted">ما كاين حتى رصيد.</p>'}
+$('anAdd').onclick=()=>{const a=$('anC').value.trim().split(' ')[0],d=r2(+$('anD').value),c=r2(+$('anCr').value);
+  if(!/^\d{4,6}$/.test(a)||(!d&&!c)){alert('عمّر رقم الحساب (4 حتى 6 أرقام) والمبلغ.');return}
+  S.an=S.an||[];S.an.push({a,d,c});S.anDate=$('anDate').value||S.anDate||(S.info.year+'-01-01');logA('📂 À nouveaux',a+' | D '+fmt(d)+' | C '+fmt(c));
+  ['anC','anD','anCr'].forEach(i=>$(i).value='');save();render()};
+$('anDate').onchange=()=>{S.anDate=$('anDate').value;save();render()};
+function delAN(i){S.an.splice(i,1);save();render()}
 
 /* ===== Paramètres ===== */
 const PF={pNom:'nom',pIce:'ice',pIf:'if_',pRc:'rc',pTel:'tel',pAdr:'adr',pCap:'capital',pDelai:'delai',pReg:'regime'};
@@ -785,7 +869,7 @@ $('bkIn').onchange=()=>{const file=$('bkIn').files[0];if(!file)return;const rd=n
 $('reset').onclick=()=>{if(confirm('غادي تمسح جميع الفواتير، Tiers والعمليات البنكية ديال هاد الدوسي. نسخة غادي تمشي لـ 🗄 Archive. متأكد؟')){toTrash('dossier',S,{dNom:curName()+' (قبل المسح)'});const info=S.info,log=S.log;S=blank();S.info=info;S.log=log;logA('🧹 مسح الداتا ديال الدوسي','');save();render()}};
 
 /* ===== Rendu ===== */
-function render(){loadInfo();renderDossiers();renderDash();renderControls();renderList();renderTiers();renderBank();renderJournal();renderBalance();renderAmort();renderTVA();renderReleve();renderBilan();renderArchive();fillDatalist()}
+function render(){loadInfo();renderDossiers();renderDash();renderControls();renderList();renderTiers();renderBank();renderJournal();renderBalance();renderAmort();renderTVA();renderReleve();renderBilan();renderArchive();renderAN();fillDatalist()}
 $('rvMonth').value=today().slice(0,7);$('date').value=today();$('ech').value=addDays(today(),S.info.delai);$('bDate').value=today();
 fillAccounts();save();render();
 </script>
