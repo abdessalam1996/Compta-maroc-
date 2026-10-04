@@ -884,11 +884,13 @@ let instPrompt=null;
 const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent),isApp=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();instPrompt=e;$('instBtn').style.display='inline-block'});
 window.addEventListener('appinstalled',()=>{instPrompt=null;$('instBtn').style.display='none'});
-if(isIOS&&!isApp)$('instBtn').style.display='inline-block';
+if(!isApp)$('instBtn').style.display='inline-block';
 $('instBtn').onclick=async()=>{
   if(instPrompt){instPrompt.prompt();await instPrompt.userChoice;instPrompt=null;$('instBtn').style.display='none';return}
+  const miss=[];for(const f of ['manifest.json','sw.js','icon-192.png','icon-512.png']){try{const r=await fetch(f,{cache:'no-store'});if(!r.ok)miss.push(f)}catch(e){miss.push(f)}}
+  if(miss.length){alert('ناقصين هاد الملفات فـ GitHub: '+miss.join('، ')+'\nحطهم بـ Upload files فنفس البلاصة مع index.html، تسنى شي دقايق وعاود حلّ السيت.');return}
   if(isIOS)alert('فالآيفون: حلّ السيت فـ Safari، ضغط على زر المشاركة ⬆️ لتحت، ومن بعد "Sur l\'écran d\'accueil".');
-  else alert('فـ Chrome: ضغط على ⋮ لفوق، ومن بعد "Installer l\'application" ولا "Ajouter à l\'écran d\'accueil".')};
+  else alert('فـ Chrome: ضغط على ⋮ لفوق على اليمين، ومن بعد "Installer l\'application" ولا "Ajouter à l\'écran d\'accueil".\nفالبيسي كاينة حتى أيقونة صغيرة ديال التثبيت ⊕ فالخانة ديال الرابط لفوق.')};
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
