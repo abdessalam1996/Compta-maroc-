@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Compta Maroc Pro</title>
+<title>Compta Pro</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1F3A5F">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
@@ -15,7 +20,8 @@ header{background:var(--ink);color:var(--w);padding:12px 16px;display:flex;justi
 header h1{margin:0;font-size:1.2rem}
 header .sub{font-size:.85rem;opacity:.8}
 header select{width:auto;max-width:200px;padding:6px 10px;background:var(--w)}
-.hctl{display:flex;gap:10px;flex-wrap:wrap}.hctl label{margin:0;color:#fff;font-weight:600}
+.hctl{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.inst{background:var(--in);color:#fff;border-color:#fff;padding:6px 12px}.hctl label{margin:0;color:#fff;font-weight:600}
 nav{display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;background:#E3EAE4;position:sticky;top:0;z-index:5;border-bottom:1px solid var(--line)}
 nav button{flex:none;padding:8px 11px}
 main{max-width:980px;margin:0 auto;padding:14px}
@@ -67,8 +73,8 @@ dialog::backdrop{background:rgba(31,58,95,.4)}
 </head>
 <body>
 <header>
-  <div><h1>Compta Maroc Pro</h1><div class="sub" id="soc"></div></div>
-  <div class="hctl"><label>🗂 الدوسي <select id="dSel"></select></label><label>Exercice <select id="ySel"></select></label></div>
+  <div><h1>Compta Pro</h1><div class="sub" id="soc"></div></div>
+  <div class="hctl"><button id="instBtn" class="inst" type="button" style="display:none">📲 Installer l'application</button><label>🗂 الدوسي <select id="dSel"></select></label><label>Exercice <select id="ySel"></select></label></div>
 </header>
 <nav id="nav">
   <button data-t="dossiers">🗂 Dossiers</button>
@@ -872,6 +878,18 @@ $('reset').onclick=()=>{if(confirm('غادي تمسح جميع الفواتير�
 function render(){loadInfo();renderDossiers();renderDash();renderControls();renderList();renderTiers();renderBank();renderJournal();renderBalance();renderAmort();renderTVA();renderReleve();renderBilan();renderArchive();renderAN();fillDatalist()}
 $('rvMonth').value=today().slice(0,7);$('date').value=today();$('ech').value=addDays(today(),S.info.delai);$('bDate').value=today();
 fillAccounts();save();render();
+
+/* ===== Application (PWA) ===== */
+let instPrompt=null;
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent),isApp=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();instPrompt=e;$('instBtn').style.display='inline-block'});
+window.addEventListener('appinstalled',()=>{instPrompt=null;$('instBtn').style.display='none'});
+if(isIOS&&!isApp)$('instBtn').style.display='inline-block';
+$('instBtn').onclick=async()=>{
+  if(instPrompt){instPrompt.prompt();await instPrompt.userChoice;instPrompt=null;$('instBtn').style.display='none';return}
+  if(isIOS)alert('فالآيفون: حلّ السيت فـ Safari، ضغط على زر المشاركة ⬆️ لتحت، ومن بعد "Sur l\'écran d\'accueil".');
+  else alert('فـ Chrome: ضغط على ⋮ لفوق، ومن بعد "Installer l\'application" ولا "Ajouter à l\'écran d\'accueil".')};
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
 </html>
