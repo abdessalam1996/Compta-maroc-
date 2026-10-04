@@ -84,6 +84,7 @@ dialog::backdrop{background:rgba(31,58,95,.4)}
   <button data-t="tvaTab">TVA</button>
   <button data-t="releve">📑 Relevé déductions</button>
   <button data-t="bilan">Bilan & CPC</button>
+  <button data-t="archive">🗄 Archive</button>
   <button data-t="params">⚙️ الإعدادات</button>
 </nav>
 <main>
@@ -205,6 +206,25 @@ dialog::backdrop{background:rgba(31,58,95,.4)}
 </div></section>
 <section id="bilan" class="tab"><div class="card" id="biOut"></div><div class="card" id="cpcOut"></div></section>
 
+<section id="archive" class="tab">
+  <div class="card">
+    <h2>🗑 المحذوفات</h2>
+    <p class="muted">أي حاجة كتمسحها (فاكتورة، عملية بنكية، Tiers ولا دوسي كامل) كتجي لهنا. تقدر تشوفها بالتفصيل ولا ترجعها لبلاصتها.</p>
+    <div class="row">
+      <div><label for="arKind">النوع</label><select id="arKind"><option value="">الكل</option><option value="inv">Factures</option><option value="bank">Banque</option><option value="tier">Tiers</option><option value="dossier">Dossiers</option></select></div>
+      <div><label for="arQ">قلّب</label><input id="arQ" placeholder="رقم، اسم، شركة…"></div>
+      <button class="ko" id="arEmpty" type="button">خوي المحذوفات</button>
+    </div>
+    <div id="arOut"></div>
+  </div>
+  <div class="card">
+    <h2>📜 سجل العمليات (هاد الدوسي)</h2>
+    <p class="muted">كل حاجة درتي فهاد الدوسي، بالتاريخ والساعة.</p>
+    <div class="row"><div><label for="lgQ">قلّب</label><input id="lgQ"></div></div>
+    <div id="lgOut"></div>
+  </div>
+</section>
+
 <section id="params" class="tab">
   <div class="card grid">
     <h2 class="full">معلومات الشركة</h2>
@@ -242,6 +262,8 @@ dialog::backdrop{background:rgba(31,58,95,.4)}
   <div class="row"><button class="main" id="pdOk" type="button">سجّل الخلاص</button><button id="pdNo" type="button">رجوع</button></div>
 </dialog>
 
+<dialog id="arDlg" style="max-width:680px"><div id="arBody"></div><div class="row" style="margin-top:12px"><button class="main" id="arRestore" type="button">♻️ رجّعها</button><button id="arClose" type="button">سد</button></div></dialog>
+
 <div id="print"></div>
 
 <script>
@@ -264,6 +286,8 @@ const RULES=[[/loyer|location/i,'6131'],[/maroc telecom|\biam\b|orange|inwi|inte
 const JNAME={AC:'Achats',VT:'Ventes',BQ:'Banque',CA:'Caisse',OD:'Opérations diverses'};
 
 /* ===== Outils ===== */
+const nowISO=()=>new Date().toISOString();
+const fmtDT=iso=>{const d=new Date(iso);return isNaN(d)?'':d.toLocaleDateString('fr-FR')+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})};
 const $=id=>document.getElementById(id);
 const r2=n=>Math.round((+n||0)*100)/100;
 const fmt=n=>(+n||0).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -280,7 +304,7 @@ function num(s){s=String(s).replace(/\s/g,'').replace(/[^\d.,]/g,'');
   if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');else s=s.replace(/\.(?=.*\.)/g,'');return parseFloat(s)}
 
 /* ===== Données : plusieurs dossiers ===== */
-const blank=()=>({info:{nom:'',ice:'',if_:'',rc:'',adr:'',tel:'',year:new Date().getFullYear(),capital:0,regime:'encaissement',delai:60},tiers:[],inv:[],bank:[],seen:{}});
+const blank=()=>({info:{nom:'',ice:'',if_:'',rc:'',adr:'',tel:'',year:new Date().getFullYear(),capital:0,regime:'encaissement',delai:60},tiers:[],inv:[],bank:[],seen:{},log:[]});
 const IDX='compta-ma-idx',dkey=id=>'compta-ma-d-'+id;
 let IDXD=null;
 try{IDXD=JSON.parse(localStorage.getItem(IDX))}catch(e){IDXD=null}
@@ -294,13 +318,21 @@ if(!IDXD||!IDXD.list||!IDXD.list.length){
   try{localStorage.setItem(dkey(id),JSON.stringify(first));localStorage.setItem(IDX,JSON.stringify(IDXD))}catch(e){}}
 if(!IDXD.list.some(x=>x.id===IDXD.current))IDXD.current=IDXD.list[0].id;
 function readDossier(id){let d=null;try{d=JSON.parse(localStorage.getItem(dkey(id)))}catch(e){}
-  d=Object.assign(blank(),d||{});d.info=Object.assign(blank().info,d.info||{});d.seen=d.seen||{};d.inv.forEach(f=>{f.tiers=f.tiers||''});return d}
+  d=Object.assign(blank(),d||{});d.info=Object.assign(blank().info,d.info||{});d.seen=d.seen||{};d.log=d.log||[];d.inv.forEach(f=>{f.tiers=f.tiers||''});return d}
 let S=readDossier(IDXD.current);
 const save=()=>{try{localStorage.setItem(dkey(IDXD.current),JSON.stringify(S));
   const e=IDXD.list.find(x=>x.id===IDXD.current);if(e){if(S.info.nom)e.nom=S.info.nom;e.upd=new Date().toISOString()}
   localStorage.setItem(IDX,JSON.stringify(IDXD))}catch(e){alert('ما قدرش يحفظ الداتا فهاد المتصفح.')}};
 
 /* ===== Tiers ===== */
+/* ===== Archive & historique ===== */
+const TKEY='compta-ma-trash';
+let TRASH=[];try{TRASH=JSON.parse(localStorage.getItem(TKEY))||[]}catch(e){TRASH=[]}
+const saveTrash=()=>{try{localStorage.setItem(TKEY,JSON.stringify(TRASH))}catch(e){alert('الأرشيف عامر بزاف، مسح شي حوايج قدام منو.')}};
+const curName=()=>S.info.nom||((IDXD.list.find(x=>x.id===IDXD.current)||{}).nom)||'';
+function toTrash(kind,data,extra){TRASH.unshift(Object.assign({tid:String(uid()),kind,data:JSON.parse(JSON.stringify(data)),at:nowISO(),dId:IDXD.current,dNom:curName()},extra||{}));saveTrash()}
+function logA(action,detail){S.log=S.log||[];S.log.unshift({at:nowISO(),action,detail:String(detail||'')});if(S.log.length>1000)S.log.length=1000}
+
 const tierType=t=>t==='vente'?'client':'fournisseur';
 function ensureTier(name,ice,type){if(!name)return null;
   let t=S.tiers.find(x=>x.type===type&&x.nom.toLowerCase()===name.toLowerCase());
@@ -322,7 +354,8 @@ function renderDossiers(){
   $('dOut').innerHTML=`<h2>الدوسيات ديال الشركات (${IDXD.list.length})</h2>`+tbl(['الشركة','ICE','فواتير','متأخرة موردين','متأخرة كليان','à justifier','الحالة','آخر تعديل',''],rows)}
 function openDossier(id){switchDossier(id);goTab('dash')}
 function delDossier(id){if(IDXD.list.length<2){alert('خاص يبقى على الأقل دوسي واحد.');return}
-  const x=IDXD.list.find(y=>y.id===id);if(!confirm('غادي تمسح الدوسي ديال "'+(x?x.nom:'')+'" بكامل الفواتير ديالو. دير Sauvegarde قبل. متأكد؟'))return;
+  const x=IDXD.list.find(y=>y.id===id);if(!confirm('غادي تمسح الدوسي ديال "'+(x?x.nom:'')+'" بكامل الفواتير ديالو. غادي يمشي لـ 🗄 Archive وتقدر ترجعو. متأكد؟'))return;
+  save();toTrash('dossier',id===IDXD.current?S:readDossier(id),{dId:id,dNom:x?x.nom:''});
   IDXD.list=IDXD.list.filter(y=>y.id!==id);try{localStorage.removeItem(dkey(id))}catch(e){}
   if(id===IDXD.current){IDXD.current=IDXD.list[0].id;S=readDossier(IDXD.current);syncTiers()}save();render()}
 $('dAdd').onclick=()=>{const nom=$('dNom').value.trim();if(!nom){$('dNom').focus();return}
@@ -367,7 +400,7 @@ $('save').onclick=()=>{const ht=+$('ht').value,date=$('date').value;
   const f={id:uid(),type,date,num,tiers,ice:$('ice').value.trim(),des:$('des').value.trim(),compte:$('compte').value,
     taux:type==='immob'?(+$('taux').value||0):0,ht:r2(ht),rate:t,tva:r2(ht*t/100),ttc:r2(ht*(1+t/100)),
     ech:$('ech').value||addDays(date,S.info.delai),payMode:pm,payType:pt,payDate:pay?date:''};
-  S.inv.push(f);ensureTier(tiers,f.ice,tierType(type));
+  S.inv.push(f);ensureTier(tiers,f.ice,tierType(type));logA('➕ فاكتورة جديدة',invRef(f));
   const fy=+date.slice(0,4);let note='';
   if(fy!==+S.info.year){S.info.year=fy;note=' | Exercice تبدل لـ '+fy}
   save();['num','tiers','ice','des','ht','mtva','ttc'].forEach(i=>$(i).value='');
@@ -487,9 +520,9 @@ $('fFilter').onchange=renderList;$('fSearch').oninput=renderList;
 let payId=null;
 function openPay(id){const f=S.inv.find(x=>x.id===id);payId=id;$('payInfo').textContent=`${f.num||''} ${f.tiers||''} | ${fmt(f.ttc)} DH`;$('pdDate').value=today();$('payDlg').showModal()}
 $('pdNo').onclick=()=>$('payDlg').close();
-$('pdOk').onclick=()=>{const f=S.inv.find(x=>x.id===payId);if(f&&$('pdDate').value){f.payDate=$('pdDate').value;[f.payMode,f.payType]=$('pdMode').value.split(':');save();render()}$('payDlg').close()};
-function unpay(id){const f=S.inv.find(x=>x.id===id);if(!f||!confirm('تلغي الخلاص ديال هاد الفاكتورة؟'))return;f.payMode='';f.payType='';f.payDate='';S.bank.forEach(b=>{if(b.match===id)b.match=null});save();render()}
-function delInv(id){if(!confirm('تمسح هاد الفاكتورة؟'))return;S.inv=S.inv.filter(f=>f.id!==id);S.bank.forEach(b=>{if(b.match===id)b.match=null});save();render()}
+$('pdOk').onclick=()=>{const f=S.inv.find(x=>x.id===payId);if(f&&$('pdDate').value){f.payDate=$('pdDate').value;[f.payMode,f.payType]=$('pdMode').value.split(':');logA('💰 خلاص',invRef(f)+' | '+PAYT[f.payType]+' | '+f.payDate);save();render()}$('payDlg').close()};
+function unpay(id){const f=S.inv.find(x=>x.id===id);if(!f||!confirm('تلغي الخلاص ديال هاد الفاكتورة؟'))return;f.payMode='';f.payType='';f.payDate='';S.bank.forEach(b=>{if(b.match===id)b.match=null});logA('↩️ إلغاء الخلاص',invRef(f));save();render()}
+function delInv(id){const f=S.inv.find(x=>x.id===id);if(!f||!confirm('تمسح هاد الفاكتورة؟ غادي تمشي لـ 🗄 Archive وتقدر ترجعها.'))return;toTrash('inv',f);logA('🗑 مسح فاكتورة',invRef(f));S.inv=S.inv.filter(f=>f.id!==id);S.bank.forEach(b=>{if(b.match===id)b.match=null});save();render()}
 function printInv(id){const f=S.inv.find(x=>x.id===id),I=S.info;
   $('print').innerHTML=`<div dir="ltr" style="font-family:Arial,sans-serif;color:#000;padding:24px;max-width:760px;margin:auto">
   <table style="width:100%"><tr><td style="vertical-align:top"><h2 style="margin:0">${esc(I.nom||'Ma société')}</h2><div>${esc(I.adr)}</div><div>Tél : ${esc(I.tel)}</div></td>
@@ -512,8 +545,8 @@ function renderTiers(){const build=type=>{const L=S.tiers.filter(t=>t.type===typ
   $('tOutF').innerHTML=build('fournisseur');$('tOutC').innerHTML=build('client')}
 $('tAdd').onclick=()=>{const nom=$('tNom').value.trim();if(!nom){$('tNom').focus();return}
   const t=ensureTier(nom,$('tIce').value.trim(),$('tType').value);t.tel=$('tTel').value.trim()||t.tel;t.if_=$('tIf').value.trim()||t.if_||'';t.email=$('tMail').value.trim()||t.email;
-  ['tNom','tIce','tIf','tTel','tMail'].forEach(i=>$(i).value='');save();render()};
-function delTier(id){if(!confirm('تمسح هاد الـ tiers؟ الفواتير ديالو غادي يبقاو.'))return;S.tiers=S.tiers.filter(t=>t.id!==id);save();render()}
+  logA('👥 Tiers',t.nom);['tNom','tIce','tIf','tTel','tMail'].forEach(i=>$(i).value='');save();render()};
+function delTier(id){const t=S.tiers.find(x=>x.id===id);if(!t||!confirm('تمسح هاد الـ tiers؟ الفواتير ديالو غادي يبقاو، وهو غادي يمشي لـ 🗄 Archive.'))return;toTrash('tier',t);logA('🗑 مسح Tiers',t.nom);S.tiers=S.tiers.filter(t=>t.id!==id);save();render()}
 
 /* ===== Banque ===== */
 function parseAmt(s){s=String(s||'').trim();if(!s)return 0;const neg=/^-|-$|^\(.*\)$/.test(s.replace(/\s/g,''));const v=num(s);return isNaN(v)?0:(neg?-v:v)}
@@ -532,16 +565,16 @@ $('bFile').onchange=()=>{const file=$('bFile').files[0];if(!file)return;const rd
     lines.forEach(l=>{const c=l.split(sep).map(x=>x.replace(/^"|"$/g,'').trim());const date=parseDate(c[0]);if(!date||c.length<3)return;
       const amount=c.length>=4?r2(parseAmt(c[3])-parseAmt(c[2])):r2(parseAmt(c[2]));if(!amount)return;
       S.bank.push({id:uid(),date,lib:c[1]||'',amount,acct:$('bAcct').value,match:null,compte:null});added++});
-    const m=autoMatch(),k=autoCat();save();render();
+    const m=autoMatch(),k=autoCat();logA('🏦 Import relevé',added+' عملية، '+m+' تربطات');save();render();
     $('bMsg').textContent=`✓ تزادو ${added} عملية. ${m} تربطو بالفواتير، و ${k} تصنفو أوتوماتيكيا.`;$('bFile').value=''};
   rd.readAsText(file,'UTF-8')};
 $('bAdd').onclick=()=>{const date=$('bDate').value,amount=r2(+$('bAmt').value);if(!date||!amount){$('bMsg').textContent='عمّر التاريخ والمبلغ.';return}
   S.bank.push({id:uid(),date,lib:$('bLib').value.trim(),amount,acct:$('bAcct').value,match:null,compte:null});
-  const m=autoMatch(),k=autoCat();save();render();['bLib','bAmt'].forEach(i=>$(i).value='');
+  const m=autoMatch(),k=autoCat();logA('🏦 عملية بنكية',date+' | '+fmt(amount)+' DH');save();render();['bLib','bAmt'].forEach(i=>$(i).value='');
   $('bMsg').textContent='✓ تزادت العملية.'+(m?' تربطات بفاكتورة.':k?' تصنفات أوتوماتيكيا.':' اختار ليها الحساب من الجدول.')};
 $('bMatch').onclick=()=>{const m=autoMatch(),k=autoCat();save();render();$('bMsg').textContent=`✓ ${m} عملية تربطات بالفواتير، و ${k} تصنفات.`};
 function setBankAcc(id,v){const b=S.bank.find(x=>x.id===id);if(b){b.compte=v||null;save();render()}}
-function delBank(id){const b=S.bank.find(x=>x.id===id);if(!b||!confirm('تمسح هاد العملية؟'))return;
+function delBank(id){const b=S.bank.find(x=>x.id===id);if(!b||!confirm('تمسح هاد العملية؟ غادي تمشي لـ 🗄 Archive.'))return;toTrash('bank',b);logA('🗑 مسح عملية بنكية',b.date+' | '+b.lib+' | '+fmt(b.amount)+' DH');
   if(b.match){const f=S.inv.find(x=>x.id===b.match);if(f){f.payMode='';f.payDate=''}}S.bank=S.bank.filter(x=>x.id!==id);save();render()}
 function renderBank(){const L=S.bank.slice().sort((a,b)=>b.date.localeCompare(a.date));
   const rows=L.map(b=>{let st;
@@ -685,6 +718,44 @@ function renderBilan(){const Y=+S.info.year,end=Y+'-12-31',B={},res={cur:0,prev:
     `<tr class="tot"><td>Résultat net ${pr-ch>=0?'(Bénéfice)':'(Perte)'}</td><td class="n" colspan="2">${fmt(pr-ch)}</td></tr>`);
   $('cpcOut').innerHTML=`<h2>CPC ${Y}</h2>`+tbl(['Compte','Charges','Produits'],C)+'<p class="muted">IS ما محسوبش هنا.</p>'}
 
+/* ===== Archive (affichage) ===== */
+const KIND={inv:'🧾 Facture',bank:'🏦 Banque',tier:'👥 Tiers',dossier:'🗂 Dossier'};
+function trashLabel(t){const d=t.data||{};
+  if(t.kind==='inv')return invRef(d);
+  if(t.kind==='bank')return `${d.date} | ${d.lib||''} | ${fmt(d.amount)} DH`;
+  if(t.kind==='tier')return `${d.nom} (${d.type})${d.ice?' | ICE '+d.ice:''}`;
+  return `${(d.info&&d.info.nom)||t.dNom} | ${(d.inv||[]).length} فاكتورة، ${(d.bank||[]).length} عملية بنكية`}
+function renderArchive(){const k=$('arKind').value,q=$('arQ').value.trim().toLowerCase();
+  const L=TRASH.filter(t=>(!k||t.kind===k)&&(!q||(trashLabel(t)+' '+t.dNom).toLowerCase().includes(q)));
+  const rows=L.map(t=>`<tr><td>${fmtDT(t.at)}</td><td>${KIND[t.kind]}</td><td>${esc(t.dNom)}</td><td>${esc(trashLabel(t))}</td><td style="white-space:nowrap"><button class="sm" onclick="viewT('${t.tid}')">👁 شوف</button> <button class="sm main" onclick="restoreT('${t.tid}')">♻️ رجّع</button> <button class="sm ko" onclick="purgeT('${t.tid}')">✕</button></td></tr>`);
+  $('arOut').innerHTML=L.length?tbl(['تاريخ المسح','النوع','الدوسي','التفاصيل',''],rows):'<p class="muted">ما كاين والو فالمحذوفات.</p>';
+  const lq=$('lgQ').value.trim().toLowerCase(),G=(S.log||[]).filter(l=>!lq||(l.action+' '+l.detail).toLowerCase().includes(lq)).slice(0,300);
+  $('lgOut').innerHTML=G.length?tbl(['التاريخ والساعة','العملية','التفاصيل'],G.map(l=>`<tr><td>${fmtDT(l.at)}</td><td>${esc(l.action)}</td><td>${esc(l.detail)}</td></tr>`)):'<p class="muted">السجل خاوي. العمليات الجديدة غادي تبان هنا.</p>'}
+$('arKind').onchange=renderArchive;$('arQ').oninput=renderArchive;$('lgQ').oninput=renderArchive;
+let viewTid=null;
+function viewT(tid){const t=TRASH.find(x=>x.tid===tid);if(!t)return;viewTid=tid;const d=t.data,kv=a=>tbl(['',''],a.map(([k,v])=>`<tr><td><b>${k}</b></td><td>${esc(v)}</td></tr>`));let h=`<h2>${KIND[t.kind]}</h2><p class="muted">تمسحات ${fmtDT(t.at)} | الدوسي: ${esc(t.dNom)}</p>`;
+  if(t.kind==='inv')h+=kv([['Type',{achat:'Achat',immob:'Immobilisation',vente:'Vente'}[d.type]],['Date',d.date],['N°',d.num],['Tiers',d.tiers],['ICE',d.ice],['Désignation',d.des],['Compte',d.compte+' '+accName(d.compte)],['HT',fmt(d.ht)],['TVA',d.rate+'% = '+fmt(d.tva)],['TTC',fmt(d.ttc)],['Échéance',d.ech],['Paiement',d.payMode?(d.payDate+' | '+PAYT[payTypeOf(d)]):'ما تخلصاتش']]);
+  else if(t.kind==='bank')h+=kv([['Date',d.date],['Libellé',d.lib],['Montant',fmt(d.amount)+' DH'],['Compte',d.compte?d.compte+' '+accName(d.compte):(d.match?'مربوطة بفاكتورة':'à justifier')]]);
+  else if(t.kind==='tier')h+=kv([['الاسم',d.nom],['النوع',d.type],['ICE',d.ice],['IF',d.if_],['التيليفون',d.tel],['Email',d.email]]);
+  else{const I=d.info||{};h+=kv([['الشركة',I.nom],['ICE',I.ice],['IF',I.if_],['فواتير',(d.inv||[]).length],['Tiers',(d.tiers||[]).length],['عمليات بنكية',(d.bank||[]).length]]);
+    h+='<h3>الفواتير</h3>'+tbl(['Date','N°','Tiers','TTC'],(d.inv||[]).slice().sort((a,b)=>b.date.localeCompare(a.date)).map(f=>`<tr><td>${f.date}</td><td>${esc(f.num)}</td><td>${esc(f.tiers)}</td><td class="n">${fmt(f.ttc)}</td></tr>`))}
+  $('arBody').innerHTML=h;$('arDlg').showModal()}
+$('arClose').onclick=()=>$('arDlg').close();
+$('arRestore').onclick=()=>{$('arDlg').close();restoreT(viewTid)};
+function restoreT(tid){const t=TRASH.find(x=>x.tid===tid);if(!t)return;
+  if(t.kind==='dossier'){const id=String(uid());try{localStorage.setItem(dkey(id),JSON.stringify(t.data))}catch(e){alert('ما قدرش يرجعو.');return}
+    IDXD.list.push({id,nom:(t.data.info&&t.data.info.nom)||t.dNom||'دوسي مرجّع',upd:nowISO()});logA('♻️ رجّعت دوسي',t.dNom);save()}
+  else{let target=IDXD.list.some(x=>x.id===t.dId)?t.dId:null;
+    if(!target){if(!confirm('الدوسي ديال هاد العملية تمسح. نرجعها للدوسي المفتوح دابا ('+curName()+')؟'))return;target=IDXD.current}
+    const D=target===IDXD.current?S:readDossier(target),arr=t.kind==='inv'?D.inv:t.kind==='bank'?D.bank:D.tiers,obj=t.data;
+    if(t.kind==='bank')obj.match=null;
+    if(!arr.some(x=>x.id===obj.id))arr.push(obj);
+    D.log=D.log||[];D.log.unshift({at:nowISO(),action:'♻️ رجّعت '+KIND[t.kind],detail:trashLabel(t)});
+    if(target===IDXD.current)save();else try{localStorage.setItem(dkey(target),JSON.stringify(D))}catch(e){}}
+  TRASH=TRASH.filter(x=>x.tid!==tid);saveTrash();render();alert('✓ ترجعات')}
+function purgeT(tid){if(!confirm('غادي تمسحها نهائيا وما تقدرش ترجعها. متأكد؟'))return;TRASH=TRASH.filter(x=>x.tid!==tid);saveTrash();renderArchive()}
+$('arEmpty').onclick=()=>{if(!TRASH.length)return;if(!confirm('غادي تمسح جميع المحذوفات نهائيا ('+TRASH.length+'). متأكد؟'))return;TRASH=[];saveTrash();renderArchive()};
+
 /* ===== Paramètres ===== */
 const PF={pNom:'nom',pIce:'ice',pIf:'if_',pRc:'rc',pTel:'tel',pAdr:'adr',pCap:'capital',pDelai:'delai',pReg:'regime'};
 function loadInfo(){Object.entries(PF).forEach(([id,k])=>$(id).value=S.info[k]??'');
@@ -694,26 +765,27 @@ function loadInfo(){Object.entries(PF).forEach(([id,k])=>$(id).value=S.info[k]??
   $('ySel').innerHTML=[...ys].filter(Boolean).sort().map(y=>`<option${y===+S.info.year?' selected':''}>${y}</option>`).join('')}
 $('ySel').onchange=()=>{S.info.year=+$('ySel').value;save();render()};
 $('pSave').onclick=()=>{Object.entries(PF).forEach(([id,k])=>S.info[k]=$(id).value.trim());
-  S.info.capital=+S.info.capital||0;S.info.delai=+S.info.delai||60;save();render();alert('تحفظ ✓')};
+  S.info.capital=+S.info.capital||0;S.info.delai=+S.info.delai||60;logA('⚙️ الإعدادات','تبدلات المعلومات ديال الشركة');save();render();alert('تحفظ ✓')};
 $('csv').onclick=()=>{const L=[['Journal','Date','Compte','Intitulé','Libellé','Débit','Crédit']];
   entries().forEach(e=>e.lines.forEach(([c,d,cr])=>L.push([e.j,e.date.startsWith('0000')?'Ouverture':e.date,c,accName(c),e.lib,String(d).replace('.',','),String(cr).replace('.',',')])));
   download('journal.csv','\uFEFF'+L.map(l=>l.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n'),'text/csv')};
-$('bkOut').onclick=()=>{save();const all={version:3,current:IDXD.current,dossiers:IDXD.list.map(x=>({id:x.id,nom:x.nom,upd:x.upd,data:readDossier(x.id)}))};download('compta-sauvegarde-'+today()+'.json',JSON.stringify(all),'application/json')};
+$('bkOut').onclick=()=>{save();const all={version:3,current:IDXD.current,dossiers:IDXD.list.map(x=>({id:x.id,nom:x.nom,upd:x.upd,data:readDossier(x.id)})),trash:TRASH};download('compta-sauvegarde-'+today()+'.json',JSON.stringify(all),'application/json')};
 $('bkIn').onchange=()=>{const file=$('bkIn').files[0];if(!file)return;const rd=new FileReader();
   rd.onload=()=>{try{const d=JSON.parse(rd.result);
     if(Array.isArray(d.dossiers)){if(!confirm('هاد Sauvegarde فيها '+d.dossiers.length+' دوسي. غادي تبدل جميع الدوسيات اللي كاينين دابا. متأكد؟'))return;
       IDXD.list.forEach(x=>{try{localStorage.removeItem(dkey(x.id))}catch(e){}});
       IDXD={current:d.current,list:d.dossiers.map(x=>({id:String(x.id),nom:x.nom,upd:x.upd}))};
       d.dossiers.forEach(x=>localStorage.setItem(dkey(String(x.id)),JSON.stringify(x.data)));
-      if(!IDXD.list.some(x=>x.id===IDXD.current))IDXD.current=IDXD.list[0].id;}
+      if(!IDXD.list.some(x=>x.id===IDXD.current))IDXD.current=IDXD.list[0].id;
+      if(Array.isArray(d.trash)){TRASH=d.trash;saveTrash()}}
     else if(d.inv&&d.info){const id=String(uid());localStorage.setItem(dkey(id),JSON.stringify(d));IDXD.list.push({id,nom:d.info.nom||'دوسي مستورد',upd:new Date().toISOString()});IDXD.current=id;}
     else throw 0;
     S=readDossier(IDXD.current);syncTiers();save();render();alert('✓ ترجعات الداتا')}
     catch(e){alert('هاد الملف ماشي Sauvegarde ديال هاد السيت.')}$('bkIn').value=''};rd.readAsText(file)};
-$('reset').onclick=()=>{if(confirm('غادي تمسح جميع الفواتير، Tiers والعمليات البنكية ديال هاد الدوسي. دير Sauvegarde قبل. متأكد؟')){const info=S.info;S=blank();S.info=info;save();render()}};
+$('reset').onclick=()=>{if(confirm('غادي تمسح جميع الفواتير، Tiers والعمليات البنكية ديال هاد الدوسي. نسخة غادي تمشي لـ 🗄 Archive. متأكد؟')){toTrash('dossier',S,{dNom:curName()+' (قبل المسح)'});const info=S.info,log=S.log;S=blank();S.info=info;S.log=log;logA('🧹 مسح الداتا ديال الدوسي','');save();render()}};
 
 /* ===== Rendu ===== */
-function render(){loadInfo();renderDossiers();renderDash();renderControls();renderList();renderTiers();renderBank();renderJournal();renderBalance();renderAmort();renderTVA();renderReleve();renderBilan();fillDatalist()}
+function render(){loadInfo();renderDossiers();renderDash();renderControls();renderList();renderTiers();renderBank();renderJournal();renderBalance();renderAmort();renderTVA();renderReleve();renderBilan();renderArchive();fillDatalist()}
 $('rvMonth').value=today().slice(0,7);$('date').value=today();$('ech').value=addDays(today(),S.info.delai);$('bDate').value=today();
 fillAccounts();save();render();
 </script>
