@@ -73,14 +73,16 @@ dialog::backdrop{background:rgba(31,58,95,.4)}
 <nav id="nav">
   <button data-t="dossiers">🗂 Dossiers</button>
   <button class="on" data-t="dash">📊 لوحة القيادة</button>
+  <button data-t="controles">✅ Contrôles</button>
   <button data-t="saisie">📷 Saisie</button>
   <button data-t="factures">🧾 Factures</button>
-  <button data-t="tiers">👥 Tiers</button>
+  <button data-t="tiersTab">👥 Tiers</button>
   <button data-t="banque">🏦 Banque</button>
   <button data-t="journal">Journal</button>
   <button data-t="balance">Balance</button>
   <button data-t="amort">Amortissements</button>
   <button data-t="tvaTab">TVA</button>
+  <button data-t="releve">📑 Relevé déductions</button>
   <button data-t="bilan">Bilan & CPC</button>
   <button data-t="params">⚙️ الإعدادات</button>
 </nav>
@@ -101,6 +103,8 @@ dialog::backdrop{background:rgba(31,58,95,.4)}
   <div class="card"><h2>المبيعات والمشتريات (HT) بالشهر</h2><div id="chart" class="scroll"></div></div>
   <div class="card"><h2>تنبيهات</h2><div id="alerts"></div></div>
 </section>
+
+<section id="controles" class="tab"><div class="card" id="ctlOut"></div></section>
 
 <section id="saisie" class="tab">
   <div class="card">
@@ -126,7 +130,7 @@ dialog::backdrop{background:rgba(31,58,95,.4)}
     <div><label for="ttc">Montant TTC</label><input type="number" id="ttc" step="0.01"></div>
     <div><label for="ech">تاريخ الاستحقاق (Échéance)</label><input type="date" id="ech"></div>
     <div><label for="pay">الخلاص</label>
-      <select id="pay"><option value="">ما تخلصاتش</option><option value="5141">تخلصات بالبنكة</option><option value="5161">تخلصات كاش</option></select></div>
+      <select id="pay"><option value="">ما تخلصاتش</option><option value="5141:4">Virement (تحويل)</option><option value="5141:2">Chèque (شيك)</option><option value="5141:5">Effet (كمبيالة)</option><option value="5141:3">Prélèvement</option><option value="5161:1">Espèces (كاش)</option></select></div>
     <button class="main full" id="save" type="button">سجّل الفاكتورة</button>
     <div class="full" id="msg"></div>
   </div>
@@ -141,14 +145,16 @@ dialog::backdrop{background:rgba(31,58,95,.4)}
   <div id="listOut"></div>
 </div></section>
 
-<section id="tiers" class="tab">
+<section id="tiersTab" class="tab">
   <div class="card grid">
     <h2 class="full">زيد Tiers</h2>
     <div><label for="tType">النوع</label><select id="tType"><option value="fournisseur">Fournisseur</option><option value="client">Client</option></select></div>
     <div><label for="tNom">الاسم</label><input id="tNom"></div>
     <div><label for="tIce">ICE</label><input id="tIce" maxlength="15" inputmode="numeric"></div>
+    <div><label for="tIf">IF (Identifiant fiscal)</label><input id="tIf" inputmode="numeric"></div>
     <div><label for="tTel">التيليفون</label><input id="tTel" inputmode="tel"></div>
-    <div class="full"><label for="tMail">Email</label><input id="tMail" type="email"></div>
+    <div><label for="tMail">Email</label><input id="tMail" type="email"></div>
+    <p class="muted full" style="margin:0">باش تبدل ولا تزيد IF لـ tiers كاين، كتب نفس الاسم بالضبط وعمّر الخانات وضغط زيد.</p>
     <button class="main full" id="tAdd" type="button">زيد</button>
   </div>
   <div class="card" id="tOutF"></div>
@@ -188,6 +194,15 @@ dialog::backdrop{background:rgba(31,58,95,.4)}
 
 <section id="amort" class="tab"><div class="card" id="aOut"></div></section>
 <section id="tvaTab" class="tab"><div class="card" id="tvOut"></div></section>
+<section id="releve" class="tab"><div class="card">
+  <div class="row">
+    <div><label for="rvType">الفترة</label><select id="rvType"><option value="M">Mensuel (شهر)</option><option value="T">Trimestriel (3 شهور)</option></select></div>
+    <div><label for="rvMonth">الشهر</label><input type="month" id="rvMonth"></div>
+    <button id="rvCsv" type="button">⬇️ تحميل Excel</button>
+    <button id="rvPrint" type="button">🖨 طباعة</button>
+  </div>
+  <div id="rvOut"></div>
+</div></section>
 <section id="bilan" class="tab"><div class="card" id="biOut"></div><div class="card" id="cpcOut"></div></section>
 
 <section id="params" class="tab">
@@ -223,7 +238,7 @@ dialog::backdrop{background:rgba(31,58,95,.4)}
   <h2>تسجيل الخلاص</h2>
   <div class="muted" id="payInfo"></div>
   <p><label for="pdDate">تاريخ الخلاص</label><input type="date" id="pdDate"></p>
-  <p><label for="pdMode">طريقة الخلاص</label><select id="pdMode"><option value="5141">البنكة (5141)</option><option value="5161">كاش (5161)</option></select></p>
+  <p><label for="pdMode">طريقة الخلاص</label><select id="pdMode"><option value="5141:4">Virement (تحويل)</option><option value="5141:2">Chèque (شيك)</option><option value="5141:5">Effet (كمبيالة)</option><option value="5141:3">Prélèvement</option><option value="5161:1">Espèces (كاش)</option></select></p>
   <div class="row"><button class="main" id="pdOk" type="button">سجّل الخلاص</button><button id="pdNo" type="button">رجوع</button></div>
 </dialog>
 
@@ -348,10 +363,10 @@ $('save').onclick=()=>{const ht=+$('ht').value,date=$('date').value;
   const t=+$('tva').value,type=$('type').value,tiers=$('tiers').value.trim(),num=$('num').value.trim();
   if(num&&S.inv.some(x=>x.num===num&&x.type===type&&x.tiers.toLowerCase()===tiers.toLowerCase())
      &&!confirm('هاد الفاكتورة مسجلة من قبل (نفس الرقم ونفس '+(type==='vente'?'الكليان':'المورد')+'). واش تزيدها مرة أخرى؟'))return;
-  const pay=$('pay').value;
+  const pay=$('pay').value,[pm,pt]=pay?pay.split(':'):['',''];
   const f={id:uid(),type,date,num,tiers,ice:$('ice').value.trim(),des:$('des').value.trim(),compte:$('compte').value,
     taux:type==='immob'?(+$('taux').value||0):0,ht:r2(ht),rate:t,tva:r2(ht*t/100),ttc:r2(ht*(1+t/100)),
-    ech:$('ech').value||addDays(date,S.info.delai),payMode:pay,payDate:pay?date:''};
+    ech:$('ech').value||addDays(date,S.info.delai),payMode:pm,payType:pt,payDate:pay?date:''};
   S.inv.push(f);ensureTier(tiers,f.ice,tierType(type));
   const fy=+date.slice(0,4);let note='';
   if(fy!==+S.info.year){S.info.year=fy;note=' | Exercice تبدل لـ '+fy}
@@ -450,6 +465,8 @@ function renderDash(){const Y=String(S.info.year),now=today();
   if(noIce.length)push('noIce','a-w',`🆔 ${noIce.length} فاكتورة ديال الشراء بلا ICE. الفاكتورة بلا ICE ممكن ما تقبلش فخصم TVA.`,noIce.map(f=>f.id).join());
   if(curTva.pay>0)push('tva','a-w',`🧮 TVA ديال هاد الشهر: ${fmt(curTva.pay)} DH خاصها تتصرح فـ SIMPL-TVA.`,curTva.pay);
   if(!S.info.nom||!S.info.ice)push('info','a-w',`⚙️ كمّل المعلومات ديال الشركة (الاسم و ICE) فالإعدادات باش يبانو فالفواتير. <button class="sm" onclick="goTab('params')">الإعدادات</button>`);
+  const ctlKo=controls().filter(r=>r.lvl==='ko').length;
+  if(ctlKo)push('ctl','a-ko',`❌ ${ctlKo} غلط فالفواتير ديال هاد العام (مكررة، ICE غلط…). <button class="sm" onclick="goTab('controles')">Contrôles</button>`,ctlKo);
   Object.keys(S.seen).forEach(k=>{if(!live[k])delete S.seen[k]});save();
   $('alerts').innerHTML=al.length?al.join(''):'<div class="alert a-ok">✓ كلشي مزيان، ما كاين حتى تنبيه.</div>'}
 function goFact(f){$('fFilter').value=f;goTab('factures')}
@@ -470,8 +487,8 @@ $('fFilter').onchange=renderList;$('fSearch').oninput=renderList;
 let payId=null;
 function openPay(id){const f=S.inv.find(x=>x.id===id);payId=id;$('payInfo').textContent=`${f.num||''} ${f.tiers||''} | ${fmt(f.ttc)} DH`;$('pdDate').value=today();$('payDlg').showModal()}
 $('pdNo').onclick=()=>$('payDlg').close();
-$('pdOk').onclick=()=>{const f=S.inv.find(x=>x.id===payId);if(f&&$('pdDate').value){f.payDate=$('pdDate').value;f.payMode=$('pdMode').value;save();render()}$('payDlg').close()};
-function unpay(id){const f=S.inv.find(x=>x.id===id);if(!f||!confirm('تلغي الخلاص ديال هاد الفاكتورة؟'))return;f.payMode='';f.payDate='';S.bank.forEach(b=>{if(b.match===id)b.match=null});save();render()}
+$('pdOk').onclick=()=>{const f=S.inv.find(x=>x.id===payId);if(f&&$('pdDate').value){f.payDate=$('pdDate').value;[f.payMode,f.payType]=$('pdMode').value.split(':');save();render()}$('payDlg').close()};
+function unpay(id){const f=S.inv.find(x=>x.id===id);if(!f||!confirm('تلغي الخلاص ديال هاد الفاكتورة؟'))return;f.payMode='';f.payType='';f.payDate='';S.bank.forEach(b=>{if(b.match===id)b.match=null});save();render()}
 function delInv(id){if(!confirm('تمسح هاد الفاكتورة؟'))return;S.inv=S.inv.filter(f=>f.id!==id);S.bank.forEach(b=>{if(b.match===id)b.match=null});save();render()}
 function printInv(id){const f=S.inv.find(x=>x.id===id),I=S.info;
   $('print').innerHTML=`<div dir="ltr" style="font-family:Arial,sans-serif;color:#000;padding:24px;max-width:760px;margin:auto">
@@ -490,12 +507,12 @@ function printInv(id){const f=S.inv.find(x=>x.id===id),I=S.info;
 function renderTiers(){const build=type=>{const L=S.tiers.filter(t=>t.type===type).sort((a,b)=>a.nom.localeCompare(b.nom));
     const rows=L.map(t=>{const inv=S.inv.filter(f=>f.tiers.toLowerCase()===t.nom.toLowerCase()&&tierType(f.type)===type);
       const tot=inv.reduce((s,f)=>s+f.ttc,0),paid=inv.filter(isPaid).reduce((s,f)=>s+f.ttc,0),rest=r2(tot-paid);
-      return `<tr><td>${esc(t.nom)}</td><td>${esc(t.ice)}</td><td>${esc(t.tel)}</td><td class="n">${inv.length}</td><td class="n">${fmt(tot)}</td><td class="n ${rest>0?'neg':''}">${fmt(rest)}</td><td><button class="sm ko" onclick="delTier(${t.id})">✕</button></td></tr>`});
-    return `<h2>${type==='fournisseur'?'Fournisseurs':'Clients'} (${L.length})</h2>`+(L.length?tbl(['الاسم','ICE','التيليفون','فواتير','المجموع TTC','الباقي',''],rows):'<p class="muted">ما كاين حتى واحد. كيتزادو بوحدهم ملي تسجل فاكتورة، ولا زيدهم من الفورم لفوق.</p>')};
+      return `<tr><td>${esc(t.nom)}</td><td>${esc(t.ice)}</td><td>${esc(t.if_||'')}</td><td>${esc(t.tel)}</td><td class="n">${inv.length}</td><td class="n">${fmt(tot)}</td><td class="n ${rest>0?'neg':''}">${fmt(rest)}</td><td><button class="sm ko" onclick="delTier(${t.id})">✕</button></td></tr>`});
+    return `<h2>${type==='fournisseur'?'Fournisseurs':'Clients'} (${L.length})</h2>`+(L.length?tbl(['الاسم','ICE','IF','التيليفون','فواتير','المجموع TTC','الباقي',''],rows):'<p class="muted">ما كاين حتى واحد. كيتزادو بوحدهم ملي تسجل فاكتورة، ولا زيدهم من الفورم لفوق.</p>')};
   $('tOutF').innerHTML=build('fournisseur');$('tOutC').innerHTML=build('client')}
 $('tAdd').onclick=()=>{const nom=$('tNom').value.trim();if(!nom){$('tNom').focus();return}
-  const t=ensureTier(nom,$('tIce').value.trim(),$('tType').value);t.tel=$('tTel').value.trim()||t.tel;t.email=$('tMail').value.trim()||t.email;
-  ['tNom','tIce','tTel','tMail'].forEach(i=>$(i).value='');save();render()};
+  const t=ensureTier(nom,$('tIce').value.trim(),$('tType').value);t.tel=$('tTel').value.trim()||t.tel;t.if_=$('tIf').value.trim()||t.if_||'';t.email=$('tMail').value.trim()||t.email;
+  ['tNom','tIce','tIf','tTel','tMail'].forEach(i=>$(i).value='');save();render()};
 function delTier(id){if(!confirm('تمسح هاد الـ tiers؟ الفواتير ديالو غادي يبقاو.'))return;S.tiers=S.tiers.filter(t=>t.id!==id);save();render()}
 
 /* ===== Banque ===== */
@@ -507,7 +524,7 @@ function autoMatch(){let n=0;
   S.bank.filter(b=>!b.match&&!b.compte).forEach(b=>{const isIn=b.amount>0;
     const c=S.inv.filter(f=>!isPaid(f)&&(isIn?f.type==='vente':f.type!=='vente')&&Math.abs(f.ttc-Math.abs(b.amount))<0.01)
       .sort((x,y)=>Math.abs(new Date(x.date)-new Date(b.date))-Math.abs(new Date(y.date)-new Date(b.date)))[0];
-    if(c){c.payMode=b.acct;c.payDate=b.date;b.match=c.id;n++}});return n}
+    if(c){c.payMode=b.acct;c.payType=b.acct==='5161'?'1':'4';c.payDate=b.date;b.match=c.id;n++}});return n}
 function autoCat(){let n=0;S.bank.filter(b=>!b.match&&!b.compte).forEach(b=>{const c=categorize(b);if(c){b.compte=c;n++}});return n}
 $('bFile').onchange=()=>{const file=$('bFile').files[0];if(!file)return;const rd=new FileReader();
   rd.onload=()=>{const lines=String(rd.result).split(/\r?\n/).filter(l=>l.trim());if(!lines.length)return;
@@ -533,6 +550,39 @@ function renderBank(){const L=S.bank.slice().sort((a,b)=>b.date.localeCompare(a.
     return `<tr><td>${b.date}</td><td>${esc(b.lib)}</td><td class="n ${b.amount<0?'neg':'pos'}">${fmt(b.amount)}</td><td>${b.acct}</td><td>${st}</td><td><button class="sm ko" onclick="delBank(${b.id})">✕</button></td></tr>`});
   const nj=L.filter(b=>!b.match&&!b.compte).length;
   $('bOut').innerHTML=`<h2>العمليات (${L.length})${nj?` <span class="badge b-w">${nj} à justifier</span>`:''}</h2>`+(L.length?tbl(['Date','Libellé','Montant','Compte','Rapprochement / Catégorie',''],rows):'<p class="muted">ما كاين حتى عملية. حمّل relevé ولا زيد عملية لفوق.</p>')}
+
+/* ===== Contrôles ===== */
+const invRef=f=>`${f.num||'بلا رقم'} | ${f.tiers||'بلا اسم'} | ${f.date} | ${fmt(f.ttc)} DH`;
+function controls(){const Y=String(S.info.year),now=today(),R=[],add=(lvl,msg,f)=>R.push({lvl,msg,f});
+  const L=S.inv.filter(f=>f.date.startsWith(Y));
+  const seenK={};L.forEach(f=>{const t=(f.tiers||'').toLowerCase(),k=f.num?`${f.type}|${t}|${f.num}`:`${f.type}|${t}|${f.date}|${f.ttc}`;
+    if(seenK[k])add('ko','فاكتورة مكررة (نفس '+(f.num?'الرقم':'المبلغ والتاريخ')+' ونفس '+(f.type==='vente'?'الكليان':'المورد')+')',f);else seenK[k]=1});
+  const tt=L.map(f=>f.ttc).sort((a,b)=>a-b),med=tt.length?tt[Math.floor(tt.length/2)]:0;
+  L.forEach(f=>{
+    if(f.ice&&!/^\d{15}$/.test(f.ice))add('ko','ICE غلط: خاصو يكون 15 رقم بالضبط (دابا فيه '+f.ice.replace(/\D/g,'').length+')',f);
+    if(!f.ice&&f.type!=='vente')add('w','بلا ICE ديال المورد، ممكن TVA ما تتخصمش',f);
+    if(!f.ice&&f.type==='vente')add('w','فاتورة البيع بلا ICE ديال الكليان (ضروري إلا كان الكليان شركة)',f);
+    if(![0,7,10,14,20].includes(+f.rate))add('ko','Taux TVA ماشي من النسب المغربية ('+f.rate+'%)',f);
+    if(Math.abs(f.ht+f.tva-f.ttc)>0.01)add('ko','HT + TVA ما كيساويش TTC',f);
+    if(f.ttc>=1000000||(L.length>=3&&med>0&&f.ttc>10*med))add('w','مبلغ كبير بزاف مقارنة مع الفواتير الأخرى، تأكد منو (ممكن غلط فالقراءة)',f);
+    if(f.date>now)add('ko','تاريخ الفاكتورة فالمستقبل',f);
+    if(f.payDate&&f.payDate<f.date)add('ko','تاريخ الخلاص قبل تاريخ الفاكتورة',f);
+    if(!f.num)add(f.type==='vente'?'ko':'w','فاكتورة بلا رقم'+(f.type==='vente'?' (رقم فاتورة البيع ضروري)':''),f);
+    if(!f.tiers)add('w','بلا اسم '+(f.type==='vente'?'الكليان':'المورد'),f);
+    if(f.type!=='vente'&&f.payMode==='5161'&&f.ttc>5000)add('w','تخلصات كاش وفاتت 5 000 DH: ممكن المصروف و TVA ما يتقبلوش فالخصم الضريبي. الأحسن بالشيك ولا التحويل',f);
+    if(f.type==='immob'&&!f.taux)add('w','Immobilisation بلا نسبة Amortissement',f)});
+  const nj=S.bank.filter(b=>!b.match&&!b.compte&&b.date.startsWith(Y)).length;
+  if(nj)add('w',nj+' عملية بنكية à justifier (بلا فاكتورة ولا حساب)',null);
+  let td=0,tc=0;entries().filter(e=>e.date.startsWith(Y)).forEach(e=>e.lines.forEach(([,d,c])=>{td+=d;tc+=c}));
+  if(Math.abs(td-tc)>0.01)add('ko','Journal ماشي متوازن: Débit ≠ Crédit',null);
+  return R.sort((a,b)=>(a.lvl==='ko'?0:1)-(b.lvl==='ko'?0:1))}
+function renderControls(){const Y=String(S.info.year),R=controls(),ko=R.filter(r=>r.lvl==='ko').length,w=R.length-ko,n=S.inv.filter(f=>f.date.startsWith(Y)).length;
+  let h=`<h2>Contrôles ${Y}</h2><p class="muted">السيت كيدوز على جميع الفواتير ديال هاد العام وكيقلب على الأخطاء قبل ما تصرح.</p>
+  <div class="kpis"><div class="kpi"><div class="l">أخطاء ❌</div><div class="v ${ko?'neg':'pos'}">${ko}</div></div><div class="kpi"><div class="l">تنبيهات ⚠️</div><div class="v">${w}</div></div><div class="kpi"><div class="l">فواتير تراقبات</div><div class="v">${n}</div></div></div>`;
+  if(!R.length)h+='<div class="alert a-ok"><div>✓ ممتاز! ما لقيت حتى غلط فهاد العام.</div></div>';
+  R.forEach(r=>{h+=`<div class="alert ${r.lvl==='ko'?'a-ko':'a-w'}"><div>${r.lvl==='ko'?'❌':'⚠️'} <b>${esc(r.msg)}</b>${r.f?`<br><span class="muted">${esc(invRef(r.f))}</span>`:''}</div>${r.f?`<span style="white-space:nowrap"><button class="sm" onclick="findInv(${r.f.id})">شوف</button> <button class="sm ko" onclick="delInv(${r.f.id})">مسح</button></span>`:''}</div>`});
+  $('ctlOut').innerHTML=h}
+function findInv(id){const f=S.inv.find(x=>x.id===id);if(!f)return;$('fFilter').value='all';goTab('factures');$('fSearch').value=f.num||f.tiers||'';renderList()}
 
 /* ===== Journal ===== */
 function renderJournal(){const Y=String(S.info.year),jf=$('jFilter').value;let td=0,tc=0;const rows=[];
@@ -571,6 +621,42 @@ function renderTVA(){const Y=String(S.info.year),M=tvaMonths(Y),T={f:0,c:0,i:0,p
   $('tvOut').innerHTML=`<h2>TVA ${Y} (Régime ${S.info.regime==='encaissement'?'encaissement':'débit'})</h2>`+
     tbl(['Mois','TVA facturée','Récup. charges','Récup. immob.','Crédit reporté','TVA à payer','Crédit'],rows)+
     `<p class="muted">${S.info.regime==='encaissement'?'الحساب على حساب تاريخ الخلاص: الفواتير اللي ما تخلصاتش ما كتدخلش.':'الحساب على حساب تاريخ الفاكتورة.'} الكريدي ديال TVA كيتنقل للشهر اللي من بعد. التصريح كيتدار فـ SIMPL-TVA.</p>`}
+
+/* ===== Relevé des déductions ===== */
+const PAYT={'1':'Espèces','2':'Chèque','3':'Prélèvement','4':'Virement','5':'Effet','6':'Compensation','7':'Autres'};
+const payTypeOf=f=>f.payType||(f.payMode==='5161'?'1':'4');
+const tierOf=f=>S.tiers.find(t=>t.type==='fournisseur'&&t.nom.toLowerCase()===(f.tiers||'').toLowerCase())||{};
+function relevePeriod(){const m=$('rvMonth').value||today().slice(0,7);
+  if($('rvType').value!=='T')return{from:m+'-01',to:m+'-31',label:m.slice(5)+'/'+m.slice(0,4)};
+  const [y,mm]=m.split('-').map(Number),qs=Math.floor((mm-1)/3)*3+1;
+  return{from:`${y}-${String(qs).padStart(2,'0')}-01`,to:`${y}-${String(qs+2).padStart(2,'0')}-31`,label:`T${(qs+2)/3} ${y}`}}
+function releveRows(){const {from,to}=relevePeriod();
+  return S.inv.filter(f=>f.type!=='vente'&&f.payDate&&f.payDate>=from&&f.payDate<=to&&f.tva>0).sort((a,b)=>a.payDate.localeCompare(b.payDate))}
+const RVH=['N°','N° facture','IF fournisseur','Fournisseur','ICE','Désignation','HT','Taux','TVA','TTC','Mode paiement','Date paiement'];
+function renderReleve(){const P=relevePeriod(),L=releveRows();
+  let h=`<h2>Relevé des déductions | ${P.label}</h2><p class="muted">الفواتير ديال الشراء اللي <b>تخلصات</b> فهاد الفترة. فالمغرب، TVA كتخصم فالشهر اللي تخلصات فيه الفاكتورة، وهاد اللائحة كتصيفطها مع التصريح فـ SIMPL-TVA.</p>`;
+  const sect=(title,list)=>{if(!list.length)return '';const T={ht:0,tva:0,ttc:0};
+    const rows=list.map((f,i)=>{const t=tierOf(f),pt=payTypeOf(f);T.ht+=f.ht;T.tva+=f.tva;T.ttc+=f.ttc;
+      return `<tr${!t.if_||!f.ice?' style="background:#FFF7E6"':''}><td class="n">${i+1}</td><td>${esc(f.num)}</td><td>${esc(t.if_||'—')}</td><td>${esc(f.tiers)}</td><td>${esc(f.ice||'—')}</td><td>${esc(f.des||accName(f.compte))}</td><td class="n">${fmt(f.ht)}</td><td class="n">${f.rate}%</td><td class="n">${fmt(f.tva)}</td><td class="n">${fmt(f.ttc)}</td><td>${pt} - ${PAYT[pt]}</td><td>${f.payDate}</td></tr>`});
+    rows.push(`<tr class="tot"><td colspan="6">Total</td><td class="n">${fmt(T.ht)}</td><td></td><td class="n">${fmt(T.tva)}</td><td class="n">${fmt(T.ttc)}</td><td colspan="2"></td></tr>`);
+    return `<h3>${title}</h3>`+tbl(RVH,rows)};
+  const C=L.filter(f=>f.type==='achat'),I=L.filter(f=>f.type==='immob');
+  if(!L.length)h+='<div class="alert a-w"><div>ما كاين حتى فاكتورة ديال الشراء فيها TVA وتخلصات فهاد الفترة. سجّل الخلاص من 🧾 Factures (زر خلّص).</div></div>';
+  h+=sect('A. Charges (TVA récupérable sur charges)',C)+sect('B. Immobilisations',I);
+  if(L.length){const tC=C.reduce((s,f)=>s+f.tva,0),tI=I.reduce((s,f)=>s+f.tva,0);
+    h+=`<div class="kpis" style="margin-top:12px"><div class="kpi"><div class="l">TVA déductible charges</div><div class="v">${fmt(tC)} DH</div></div><div class="kpi"><div class="l">TVA déductible immob.</div><div class="v">${fmt(tI)} DH</div></div><div class="kpi"><div class="l">المجموع</div><div class="v pos">${fmt(tC+tI)} DH</div></div></div>`}
+  const miss=L.filter(f=>!tierOf(f).if_||!f.ice).length;
+  if(miss)h+=`<div class="alert a-w"><div>⚠️ ${miss} فاكتورة ناقصها IF ولا ICE ديال المورد (السطور الصفرين). زيد IF من 👥 Tiers، و ICE من الفاكتورة.</div><button class="sm" onclick="goTab('tiersTab')">Tiers</button></div>`;
+  const cash=L.filter(f=>payTypeOf(f)==='1'&&f.ttc>5000).length;
+  if(cash)h+=`<div class="alert a-ko"><div>❌ ${cash} فاكتورة تخلصات كاش وفاتت 5 000 DH: TVA ديالها ممكن ما تتقبلش فالخصم.</div></div>`;
+  $('rvOut').innerHTML=h}
+$('rvType').onchange=renderReleve;$('rvMonth').onchange=renderReleve;
+$('rvCsv').onclick=()=>{const P=relevePeriod(),L=releveRows(),out=[['Section',...RVH]];
+  [['Charges',L.filter(f=>f.type==='achat')],['Immobilisations',L.filter(f=>f.type==='immob')]].forEach(([sec,list])=>list.forEach((f,i)=>{const t=tierOf(f),pt=payTypeOf(f);
+    out.push([sec,i+1,f.num,t.if_||'',f.tiers,f.ice,f.des||accName(f.compte),String(f.ht).replace('.',','),f.rate,String(f.tva).replace('.',','),String(f.ttc).replace('.',','),pt+' - '+PAYT[pt],f.payDate])}));
+  download('releve-deductions-'+P.label.replace(/\W+/g,'-')+'.csv','\uFEFF'+out.map(l=>l.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\n'),'text/csv')};
+$('rvPrint').onclick=()=>{const I=S.info;
+  $('print').innerHTML=`<div style="font-family:Arial,sans-serif;color:#000;padding:16px"><h2 style="margin:0">${esc(I.nom||'')}</h2><div>ICE : ${esc(I.ice)} | IF : ${esc(I.if_)}</div><hr></div>`;const c=$('rvOut').cloneNode(true);c.querySelectorAll('.alert').forEach(x=>x.remove());$('print').firstChild.appendChild(c);window.print()};
 
 /* ===== Bilan & CPC ===== */
 function renderBilan(){const Y=+S.info.year,end=Y+'-12-31',B={},res={cur:0,prev:0},am={};
@@ -627,8 +713,8 @@ $('bkIn').onchange=()=>{const file=$('bkIn').files[0];if(!file)return;const rd=n
 $('reset').onclick=()=>{if(confirm('غادي تمسح جميع الفواتير، Tiers والعمليات البنكية ديال هاد الدوسي. دير Sauvegarde قبل. متأكد؟')){const info=S.info;S=blank();S.info=info;save();render()}};
 
 /* ===== Rendu ===== */
-function render(){loadInfo();renderDossiers();renderDash();renderList();renderTiers();renderBank();renderJournal();renderBalance();renderAmort();renderTVA();renderBilan();fillDatalist()}
-$('date').value=today();$('ech').value=addDays(today(),S.info.delai);$('bDate').value=today();
+function render(){loadInfo();renderDossiers();renderDash();renderControls();renderList();renderTiers();renderBank();renderJournal();renderBalance();renderAmort();renderTVA();renderReleve();renderBilan();fillDatalist()}
+$('rvMonth').value=today().slice(0,7);$('date').value=today();$('ech').value=addDays(today(),S.info.delai);$('bDate').value=today();
 fillAccounts();save();render();
 </script>
 </body>
